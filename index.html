@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Apotek Chesa Farma</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#f4f9f6;--surface:#fff;--border:#dce8e1;
+  --primary:#0f7a3d;--primary-light:#e6f7ed;--primary-dark:#0a5c2d;
+  --text:#0f1f16;--muted:#67806f;
+  --success:#15803d;--success-bg:#dcfce7;
+  --danger:#dc2626;--danger-bg:#fee2e2;
+  --warning:#b45309;--warning-bg:#fef3c7;
+  --info-bg:#dbeafe;--info:#1d4ed8;
+  --purple:#7c3aed;--purple-bg:#f3e8ff;
+  --radius:14px;--shadow:0 2px 12px rgba(15,60,35,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f7a3d,#0a5c2d);padding:20px}
+.login-card{background:#fff;border-radius:24px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.login-logo-full{display:flex;justify-content:center;margin-bottom:26px}
+.login-logo-img{width:100%;max-width:260px;height:auto;object-fit:contain}
+.login-err{background:var(--danger-bg);color:var(--danger);padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:14px;display:none}
+.forgot-pw-link{font-size:13px;color:var(--primary);font-weight:600;text-decoration:none}
+
+/* APP */
+#app{display:none;height:100vh;flex-direction:column}
+#topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:15px}
+.topbar-badge{padding:4px 12px;border-radius:8px;font-size:12.5px;font-weight:700}
+.badge-superadmin{background:var(--purple-bg);color:var(--purple)}
+.badge-apotek{background:var(--primary-light);color:var(--primary)}
+.topbar-right{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);font-weight:600}
+.btn-logout{cursor:pointer;border:1.5px solid var(--border);background:#fff;border-radius:9px;padding:6px 14px;font-size:13px;font-weight:700;color:var(--danger);font-family:inherit;transition:all .15s}
+.btn-logout:hover{background:var(--danger-bg)}
+#body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+#sidebar{width:220px;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+nav{padding:12px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px;color:var(--muted);transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:#f1f5fb;color:var(--text)}
+.nav-item.active{background:var(--primary-light);color:var(--primary)}
+.nav-sep{height:1px;background:var(--border);margin:8px 10px}
+.nav-label{padding:6px 11px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:700}
+.nav-badge.warn{background:#f59e0b}
+.sidebar-footer{padding:12px 16px;font-size:11px;color:var(--muted);border-top:1.5px solid var(--border)}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;padding:26px 28px}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.page-title{font-size:22px;font-weight:800}
+
+/* CARDS */
+.card{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1.5px solid var(--border)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.hero-card{background:linear-gradient(135deg,#0f7a3d,#0a5c2d);border-radius:18px;padding:24px 26px;color:#fff;box-shadow:0 8px 24px rgba(15,122,61,.25)}
+.stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);border:1.5px solid var(--border);border-top:4px solid var(--c)}
+.stat-label{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:800;color:var(--c)}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* TABLE */
+.tbl-wrap{background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);overflow:auto;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:10px 14px;background:#f8fafc;color:var(--muted);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:hover td{background:#fafbfd}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.bg-green{background:var(--success-bg);color:var(--success)}
+.bg-red{background:var(--danger-bg);color:var(--danger)}
+.bg-yellow{background:var(--warning-bg);color:var(--warning)}
+.bg-blue{background:var(--info-bg);color:var(--info)}
+.bg-gray{background:#f1f5f9;color:#64748b}
+.bg-purple{background:var(--purple-bg);color:var(--purple)}
+
+/* BUTTONS */
+.btn{cursor:pointer;border:none;border-radius:9px;font-family:inherit;font-weight:700;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{filter:brightness(1.07);transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn-primary{background:var(--primary);color:#fff;padding:10px 18px;font-size:14px}
+.btn-danger{background:var(--danger);color:#fff;padding:7px 13px;font-size:12.5px}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border);padding:7px 13px;font-size:12.5px}
+.btn-ghost:hover{background:#f1f5f9;color:var(--text)}
+.btn-warning{background:#f59e0b;color:#fff;padding:7px 13px;font-size:12.5px}
+.btn-purple{background:var(--purple);color:#fff;padding:10px 18px;font-size:14px}
+
+/* INPUTS */
+input,select,textarea{font-family:inherit;font-size:13.5px;color:var(--text)}
+.inp{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;background:#fff;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--primary)}
+.form-label{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px;display:block}
+.form-group{margin-bottom:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.full{grid-column:1/-1}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:18px;padding:26px;width:500px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-lg{width:640px}
+.search-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.14);max-height:360px;overflow-y:auto;z-index:50;display:none}
+.search-dropdown.open{display:block}
+.search-result-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover{background:#f8fafc}
+.search-result-name{font-weight:700;font-size:13.5px}
+.search-result-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.search-result-price{font-weight:800;font-size:13px;color:var(--primary);text-align:right;white-space:nowrap}
+.search-result-stock{font-size:10.5px;background:var(--success-bg);color:var(--success);padding:2px 7px;border-radius:99px;display:inline-block;margin-top:3px}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:20px}
+
+/* CASHIER */
+.cashier-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;height:calc(100vh - 140px)}
+.drug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:11px;align-content:start}
+.drug-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;transition:all .15s}
+.drug-card:hover{border-color:var(--primary);box-shadow:0 4px 14px rgba(21,87,232,.13);transform:translateY(-2px)}
+.cart-wrap{display:flex;flex-direction:column;gap:10px;height:100%;overflow:hidden}
+.cart-items{flex:1;overflow-y:auto}
+.cart-item{padding:9px 0;border-bottom:1px solid #f1f5f9}
+.qty-btn{width:28px;height:28px;border:1.5px solid var(--border);border-radius:7px;background:#fff;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.qty-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.total-line{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:4px 0}
+.total-line.big{font-size:18px;font-weight:800}
+
+/* UNIT BADGES */
+.unit-tablet{background:#dcfce7;color:#166534}
+.unit-strip{background:#f0fdf4;color:#166534}
+.unit-dus{background:#fef9c3;color:#854d0e}
+.unit-kapsul{background:#fdf2f8;color:#9d174d}
+.unit-botol{background:#fff7ed;color:#9a3412}
+.unit-lainnya{background:#f1f5f9;color:#475569}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:13px}
+.prog-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.prog-bar{background:#f0f4f8;border-radius:99px;height:7px}
+.prog-fill{background:var(--primary);height:100%;border-radius:99px;transition:width .6s}
+
+/* RECEIPT */
+.receipt{font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7}
+.receipt .sep{border-top:1px dashed #ccc;margin:10px 0}
+
+/* APOTEK CARD (superadmin) */
+.apotek-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);transition:all .15s}
+.apotek-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.1)}
+.apotek-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.apotek-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.apotek-status-active{background:var(--success-bg);color:var(--success)}
+.apotek-status-inactive{background:#f1f5f9;color:#64748b}
+.pw-field{display:flex;align-items:center;gap:8px}
+.pw-text{font-family:'JetBrains Mono',monospace;font-size:13px;background:#f8fafc;padding:4px 10px;border-radius:7px;border:1px solid var(--border);flex:1;letter-spacing:.05em}
+
+/* LOG TABLE */
+.log-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+
+/* FILTER */
+.filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.filter-row .inp{max-width:260px}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast-item{padding:13px 18px;border-radius:11px;font-weight:700;font-size:13.5px;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:toastIn .3s ease}
+.toast-ok{background:#16a34a}.toast-err{background:#dc2626}.toast-info{background:var(--primary)}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.info-box{background:var(--primary-light);border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#1e40af;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo-full">
+      <img src="data:image/webp;base64,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" alt="Apotek Chesa Farma" class="login-logo-img"/>
+    </div>
+    <div style="font-size:21px;font-weight:800;margin-bottom:4px;text-align:center">Selamat Datang</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px;text-align:center">Masuk untuk mengelola apotek Anda</div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="inp" id="login-user" placeholder="Username" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kata Sandi</label>
+      <div style="position:relative">
+        <input type="password" class="inp" id="login-pass" placeholder="Kata sandi" onkeydown="if(event.key==='Enter')doLogin()" style="padding-right:44px"/>
+        <button onclick="togglePw()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted)" id="pw-eye">👁</button>
+      </div>
+    </div>
+    <div class="login-err" id="login-err">Username atau kata sandi salah!</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px" onclick="doLogin()">Masuk →</button>
+    <div style="text-align:center;margin-top:16px">
+      <a href="#" onclick="openResetForm();return false" style="font-size:13px;font-weight:700;color:var(--primary);text-decoration:none">Lupa sandi?</a>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <a href="#" onclick="openForgotPwModal();return false;" style="font-size:13px;color:var(--primary);font-weight:600;text-decoration:none">Lupa kata sandi?</a>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-logo-holder" style="display:none">
+  <img id="app-logo-src" src="data:image/webp;base64,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"/>
+</div>
+<div id="app" style="display:none;flex-direction:column;height:100vh">
+  <div id="topbar">
+    <div class="topbar-brand">
+      <img src="" id="topbar-logo-img" alt="logo" style="height:28px;width:auto"/>
+      <span class="topbar-badge" id="topbar-badge">—</span>
+    </div>
+    <div class="topbar-right">
+      <span id="topbar-user">—</span>
+      <button class="btn-logout" onclick="doLogout()">⏏ Keluar</button>
+    </div>
+  </div>
+  <div id="body">
+    <div id="sidebar">
+      <nav id="sidebar-nav"></nav>
+      <div class="sidebar-footer" id="sidebar-date"></div>
+    </div>
+    <div id="main">
+
+      <!-- SUPERADMIN PAGES -->
+      <div class="page" id="page-sa-dashboard"></div>
+      <div class="page" id="page-sa-apoteks">
+        <div class="page-header">
+          <div class="page-title">Manajemen Apotek</div>
+          <button class="btn btn-purple" onclick="openApotekModal()">+ Tambah Apotek</button>
+        </div>
+        <div id="apotek-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px"></div>
+      </div>
+      <div class="page" id="page-sa-monitor">
+        <div class="page-header">
+          <div class="page-title">Monitor Semua Apotek</div>
+          <select class="inp" id="monitor-period" style="width:160px" onchange="renderMonitor()">
+            <option value="today">Hari Ini</option>
+            <option value="week">7 Hari Terakhir</option>
+            <option value="month">Bulan Ini</option>
+            <option value="all">Semua</option>
+          </select>
+        </div>
+        <div id="monitor-content"></div>
+      </div>
+      <div class="page" id="page-sa-logs">
+        <div class="page-header"><div class="page-title">Log Aktivitas Login</div></div>
+        <div class="card" id="log-content"></div>
+      </div>
+
+      <!-- APOTEK PAGES -->
+      <div class="page" id="page-dashboard"></div>
+      <div class="page" id="page-cashier">
+        <div id="cashier-main">
+          <div class="page-header"><div class="page-title">Kasir / POS</div></div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">Pelanggan</label>
+              <input class="inp" id="cart-customer" value="Umum" list="cust-datalist"/>
+              <datalist id="cust-datalist"></datalist>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label">No. Resep (opsional)</label>
+              <input class="inp" id="cart-resep" placeholder="R/..."/>
+            </div>
+          </div>
+          <div style="position:relative;margin-bottom:14px">
+            <input class="inp" id="drug-search" placeholder="🔍 Cari nama obat..." oninput="renderSearchResults()" onfocus="renderSearchResults()"/>
+            <div id="search-results" class="search-dropdown"></div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:16px 18px;font-weight:800;font-size:15px;border-bottom:1.5px solid var(--border)">🛒 Keranjang</div>
+            <div class="cart-items" id="cart-items">
+              <div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px">Cari obat untuk ditambahkan</div>
+            </div>
+            <div id="cart-summary"></div>
+          </div>
+        </div>
+
+        <!-- HALAMAN DETAIL ITEM (atur jumlah/satuan/diskon sebelum masuk keranjang) -->
+        <div id="item-detail-screen" style="display:none">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <button class="btn btn-ghost" style="padding:8px 12px" onclick="closeItemDetail()">←</button>
+            <div style="font-weight:800;font-size:16px" id="item-detail-id"></div>
+          </div>
+          <div class="card">
+            <div style="font-weight:800;font-size:18px;margin-bottom:4px" id="item-detail-name"></div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="item-detail-stock"></div>
+            <div style="text-align:right;margin-bottom:20px">
+              <div style="font-size:13px;color:var(--muted)" id="item-detail-calc"></div>
+              <div style="font-size:30px;font-weight:800;color:var(--primary)" id="item-detail-subtotal">Rp0</div>
+            </div>
+            <div class="form-grid" style="margin-bottom:4px">
+              <div class="form-group"><label class="form-label">Jumlah</label>
+                <input type="number" class="inp" id="item-qty" value="1" min="1" oninput="updateItemDetailCalc()"/>
+              </div>
+              <div class="form-group"><label class="form-label">Satuan</label>
+                <select class="inp" id="item-unit" onchange="updateItemDetailCalc()"></select>
+              </div>
+            </div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="form-group"><label class="form-label">Diskon</label>
+                <select class="inp" id="item-disc-mode" onchange="updateItemDetailCalc()">
+                  <option value="percent">%</option>
+                  <option value="rupiah">Rp</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">&nbsp;</label>
+                <input type="number" class="inp" id="item-disc-value" value="0" min="0" oninput="updateItemDetailCalc()"/>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px" onclick="addItemFromDetail()">Tambahkan</button>
+          </div>
+        </div>
+
+        <!-- HALAMAN BAYAR -->
+        <div id="payment-screen" style="display:none">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <button class="btn btn-ghost" style="padding:8px 12px" onclick="closePayment()">←</button>
+            <div style="font-weight:800;font-size:16px">Tunai</div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Total tagihan</div>
+            <div style="font-size:32px;font-weight:800;margin-bottom:20px" id="pay-total">Rp0</div>
+            <div class="form-group">
+              <label class="form-label">Jumlah yang dibayar *</label>
+              <input type="number" class="inp" id="pay-input" placeholder="0" style="font-size:16px" oninput="updatePayChange()"/>
+            </div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 0 8px">Tunai diterima</div>
+            <div id="pay-shortcuts" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px"></div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Kembali</div>
+            <div style="font-size:22px;font-weight:800;color:var(--success);margin-bottom:20px" id="pay-change">Rp0</div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px" onclick="finalizeCheckout()">✓ Selesai</button>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-drugs">
+        <div class="page-header">
+          <div class="page-title">Data Obat</div>
+          <button class="btn btn-primary" onclick="openDrugModal()">+ Tambah Obat</button>
+        </div>
+        <div class="filter-row">
+          <input class="inp" id="drug-search2" placeholder="🔍 Cari nama / no. batch..." oninput="renderDrugsTable()"/>
+          <select class="inp" id="unit-filter" style="max-width:160px" onchange="renderDrugsTable()">
+            <option value="">Semua Satuan</option>
+          </select>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Nama Obat</th><th>No. Batch</th><th>Satuan</th><th>Stok</th><th>Harga Jual</th><th>Harga Beli</th><th>Tgl ED</th><th>Supplier</th><th></th></tr></thead><tbody id="drugs-tbody"></tbody></table></div>
+      </div>
+      <div class="page" id="page-expired">
+        <div class="page-header"><div class="page-title">Manajemen Expired Obat</div></div>
+        <div id="expired-content"></div>
+      </div>
+      <div class="page" id="page-purchasing">
+        <div class="page-header">
+          <div class="page-title">Pembelian</div>
+        </div>
+        <div class="filter-row" style="margin-bottom:4px">
+          <button class="nav-item po-tab active" onclick="showPurchasingTab('po',this)" style="flex:none">📝 Surat Pesanan</button>
+          <button class="nav-item po-tab" onclick="showPurchasingTab('faktur',this)" style="flex:none">📄 Faktur</button>
+          <button class="nav-item po-tab" onclick="showPurchasingTab('supplier',this)" style="flex:none">🏢 PBF / Supplier</button>
+        </div>
+        <div id="po-tab-content">
+          <div class="page-header"><div></div><button class="btn btn-primary" onclick="openPOModal()">+ Buat Surat Pesanan</button></div>
+          <div class="tbl-wrap"><table><thead><tr><th>No. SP</th><th>Tanggal</th><th>PBF / Supplier</th><th>Jumlah Item</th><th>Status</th><th></th></tr></thead><tbody id="po-tbody"></tbody></table></div>
+        </div>
+        <div id="faktur-tab-content" style="display:none">
+          <div class="page-header"><div></div><button class="btn btn-primary" onclick="openFakturModal()">+ Input Faktur</button></div>
+          <div class="tbl-wrap"><table><thead><tr><th>No. Faktur</th><th>Tanggal</th><th>PBF / Supplier</th><th>No. SP Terkait</th><th>Jumlah Item</th><th></th></tr></thead><tbody id="faktur-tbody"></tbody></table></div>
+        </div>
+        <div id="supplier-tab-content" style="display:none">
+          <div class="page-header"><div></div><button class="btn btn-primary" onclick="openSupplierModal()">+ Tambah PBF/Supplier</button></div>
+          <div class="tbl-wrap"><table><thead><tr><th>Nama PBF/Supplier</th><th>Alamat</th><th>Telepon</th><th></th></tr></thead><tbody id="supplier-tbody"></tbody></table></div>
+        </div>
+      </div>
+      <div class="page" id="page-sales">
+        <div class="page-header"><div class="page-title">Riwayat Penjualan</div></div>
+        <div class="filter-row">
+          <input class="inp" id="sales-search" placeholder="🔍 Cari pelanggan / obat..." oninput="renderSalesTable()"/>
+          <input type="date" class="inp" id="sales-from" style="max-width:160px" onchange="renderSalesTable()"/>
+          <span style="align-self:center;color:var(--muted);font-size:13px">s/d</span>
+          <input type="date" class="inp" id="sales-to" style="max-width:160px" onchange="renderSalesTable()"/>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>No. Transaksi</th><th>Tanggal</th><th>Pelanggan</th><th>Item</th><th>Total</th><th>Bayar</th><th>Kembalian</th><th>Resep</th><th></th></tr></thead><tbody id="sales-tbody"></tbody></table></div>
+      </div>
+      <div class="page" id="page-customers">
+        <div class="page-header">
+          <div class="page-title">Data Pelanggan</div>
+          <button class="btn btn-primary" onclick="openCustModal()">+ Tambah Pelanggan</button>
+        </div>
+        <div class="filter-row">
+          <input class="inp" id="cust-search" placeholder="🔍 Cari nama / telepon..." oninput="renderCustTable()"/>
+        </div>
+        <div class="tbl-wrap"><table><thead><tr><th>Nama</th><th>Telepon</th><th>Alamat</th><th>Total Transaksi</th><th>Total Belanja</th><th></th></tr></thead><tbody id="cust-tbody"></tbody></table></div>
+      </div>
+      <div class="page" id="page-reports">
+        <div class="page-header">
+          <div class="page-title">Laporan</div>
+          <select class="inp" id="report-period" style="width:170px" onchange="renderReports()">
+            <option value="today">Hari Ini</option><option value="week">7 Hari Terakhir</option>
+            <option value="month">Bulan Ini</option><option value="all">Semua</option>
+          </select>
+        </div>
+        <div class="stat-grid" id="report-stats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="card" id="report-terlaris"></div>
+          <div class="card" id="report-detail"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="modal-area"></div>
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyA_uxb3hi3zJfypp5z-Ke2cOzfM3OiRP_I",
+  authDomain: "chesa-farma.firebaseapp.com",
+  projectId: "chesa-farma",
+  storageBucket: "chesa-farma.firebasestorage.app",
+  messagingSenderId: "991208619354",
+  appId: "1:991208619354:web:e7ea6f9a6cecc578b88763"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+let fbReady = false;
+let fbOnlineBadgeShown = false;
+
+function showConnStatus(online){
+  if(fbOnlineBadgeShown) return;
+  fbOnlineBadgeShown = true;
+  showToast(online?"Terhubung ke database online":"Mode offline — perubahan tersimpan lokal", online?"ok":"err");
+  setTimeout(()=>{fbOnlineBadgeShown=false;},4000);
+}
+
+// ══════════════════════════════════════════════
+// SUPERADMIN CONFIG
+// ══════════════════════════════════════════════
+const SUPERADMIN = {username:"superadmin", password:"ChesaFarma@2024"};
+
+// ══════════════════════════════════════════════
+// LOCAL CACHE (kept in sync with Firestore in realtime)
+// This lets all existing render functions stay synchronous —
+// they just read from this cache, while writes go to Firestore
+// and the cache updates automatically via onSnapshot listeners.
+// ══════════════════════════════════════════════
+let cache = {
+  apoteks: null,   // array
+  drugs: {},       // { apotekId: array }
+  sales: {},       // { apotekId: array }
+  customers: {},   // { apotekId: array }
+  pos: {},         // { apotekId: array } Surat Pesanan
+  fakturs: {},     // { apotekId: array } Faktur
+  suppliers: {},   // { apotekId: array } PBF / Supplier master data
+  logs: [],        // array
+};
+let unsubscribers = []; // active onSnapshot listeners to clean up on logout
+
+function clearListeners(){
+  unsubscribers.forEach(u=>{try{u();}catch(e){}});
+  unsubscribers=[];
+}
+
+// ══════════════════════════════════════════════
+// APOTEK MANAGEMENT (Firestore: collection "apoteks")
+// ══════════════════════════════════════════════
+async function ensureDefaultApotek(){
+  const snap = await db.collection("apoteks").get();
+  if(snap.empty){
+    await db.collection("apoteks").doc("chesa_farma").set({
+      id:"chesa_farma",name:"Apotek Chesa Farma",address:"",icon:"💊",
+      username:"chesa-farma",password:"chesa123",active:true,createdAt:todayStr()
+    });
+  }
+}
+
+function listenApoteks(cb){
+  const unsub = db.collection("apoteks").onSnapshot(snap=>{
+    cache.apoteks = snap.docs.map(d=>d.data());
+    showConnStatus(true);
+    if(cb) cb();
+    // Auto-refresh visible superadmin pages when apotek data changes
+    if(session && session.type==="superadmin"){
+      const active=document.querySelector(".page.active");
+      if(active){
+        if(active.id==="page-sa-dashboard")renderSADashboard();
+        if(active.id==="page-sa-apoteks")renderApotekCards();
+        if(active.id==="page-sa-monitor")renderMonitor();
+      }
+    }
+  }, err=>{
+    console.error(err);
+    showConnStatus(false);
+  });
+  unsubscribers.push(unsub);
+}
+
+function getApoteks(){
+  return cache.apoteks || [];
+}
+async function saveApoteksSingle(apotek){
+  await db.collection("apoteks").doc(apotek.id).set(apotek);
+}
+async function deleteApotekDoc(id){
+  await db.collection("apoteks").doc(id).delete();
+  // Also delete subcollections (drugs/sales/customers)
+  for(const col of ["drugs","sales","customers"]){
+    const snap = await db.collection("apoteks").doc(id).collection(col).get();
+    const batch = db.batch();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    if(!snap.empty) await batch.commit();
+  }
+}
+
+// ══════════════════════════════════════════════
+// RESET PASSWORD VIA KODE (Super Admin generates, Apotek admin redeems)
+// ══════════════════════════════════════════════
+function genResetCode(){
+  // 6-digit numeric code
+  return String(Math.floor(100000+Math.random()*900000));
+}
+async function generateResetCodeForApotek(id){
+  const apoteks=getApoteks();
+  const a=apoteks.find(x=>x.id===id);
+  if(!a) return;
+  const code=genResetCode();
+  const updated={...a, resetCode:code, resetCodeUsed:false, resetCodeCreatedAt:Date.now()};
+  await saveApoteksSingle(updated);
+  return code;
+}
+async function redeemResetCode(username, code, newPassword){
+  const apoteks=getApoteks();
+  const a=apoteks.find(x=>x.username===username && x.active);
+  if(!a) return {ok:false, msg:"Username tidak ditemukan"};
+  if(!a.resetCode || a.resetCodeUsed) return {ok:false, msg:"Belum ada kode reset aktif untuk akun ini. Hubungi Super Admin."};
+  if(a.resetCode !== code) return {ok:false, msg:"Kode reset salah"};
+  // Optional expiry: 24 hours
+  if(a.resetCodeCreatedAt && (Date.now()-a.resetCodeCreatedAt) > 24*3600*1000){
+    return {ok:false, msg:"Kode reset sudah kedaluwarsa. Minta kode baru ke Super Admin."};
+  }
+  const updated={...a, password:newPassword, resetCodeUsed:true, resetCode:null};
+  await saveApoteksSingle(updated);
+  return {ok:true};
+}
+
+// ══════════════════════════════════════════════
+// SEED DATA OBAT
+// ══════════════════════════════════════════════
+// Tiap obat punya daftar "kemasan" berjenjang bebas (bukan lagi 3 pilihan tetap).
+// kemasan[0] = satuan terkecil (isi selalu 1, basis stok & konversi).
+// kemasan[n].isi = jumlah kemasan[n-1] yang terkandung di dalamnya.
+const SEED_DRUGS=[
+  {id:1,name:"Paracetamol 500mg",batch:"BCH-2024-001",stock:1200,minStock:200,expiry:"2026-12-31",supplier:"Kimia Farma",
+    kemasan:[
+      {name:"Tablet",singkatan:"tab",isi:1,cost:250,costInputRaw:250,ppn:false,marginMode:"percent",marginValue:20,price:333},
+      {name:"Strip",singkatan:"str",isi:10,cost:2500,costInputRaw:2500,ppn:false,marginMode:"percent",marginValue:20,price:3330},
+      {name:"Dus",singkatan:"dus",isi:10,cost:25000,costInputRaw:25000,ppn:false,marginMode:"percent",marginValue:20,price:33300},
+    ]},
+  {id:2,name:"Amoxicillin 500mg",batch:"BCH-2024-002",stock:300,minStock:100,expiry:"2026-08-15",supplier:"Dexa Medica",
+    kemasan:[
+      {name:"Kapsul",singkatan:"kap",isi:1,cost:800,costInputRaw:800,ppn:false,marginMode:"percent",marginValue:25,price:1110},
+      {name:"Strip",singkatan:"str",isi:10,cost:8000,costInputRaw:8000,ppn:false,marginMode:"percent",marginValue:25,price:11100},
+    ]},
+];
+
+// ══════════════════════════════════════════════
+// SESSION STATE
+// ══════════════════════════════════════════════
+let session = null; // {type:"superadmin"} or {type:"apotek", apotek:{...}}
+let cart = [];
+
+// ══════════════════════════════════════════════
+// STORAGE HELPERS (per apotek) — Firestore-backed with local cache
+// ══════════════════════════════════════════════
+function apotekRef(){ return db.collection("apoteks").doc(session.apotek.id); }
+
+function listenApotekData(cb){
+  const aid = session.apotek.id;
+  if(!cache.drugs[aid]) cache.drugs[aid]=JSON.parse(JSON.stringify(SEED_DRUGS));
+  if(!cache.sales[aid]) cache.sales[aid]=[];
+  if(!cache.customers[aid]) cache.customers[aid]=[{id:1,name:"Budi Santoso",phone:"08123456789",address:"Jl. Merdeka No.1"}];
+
+  const u1 = apotekRef().collection("meta").doc("drugs").onSnapshot(doc=>{
+    if(doc.exists) cache.drugs[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("drugs").set({items:cache.drugs[aid]});
+    showConnStatus(true);
+    if(cb) cb("drugs");
+    refreshCurrentPage();
+  }, err=>{console.error(err);showConnStatus(false);});
+
+  const u2 = apotekRef().collection("meta").doc("sales").onSnapshot(doc=>{
+    if(doc.exists) cache.sales[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("sales").set({items:[]});
+    if(cb) cb("sales");
+    refreshCurrentPage();
+  }, err=>console.error(err));
+
+  const u3 = apotekRef().collection("meta").doc("customers").onSnapshot(doc=>{
+    if(doc.exists) cache.customers[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("customers").set({items:cache.customers[aid]});
+    if(cb) cb("customers");
+    refreshCurrentPage();
+  }, err=>console.error(err));
+
+  if(!cache.pos[aid]) cache.pos[aid]=[];
+  if(!cache.fakturs[aid]) cache.fakturs[aid]=[];
+
+  const u4 = apotekRef().collection("meta").doc("po").onSnapshot(doc=>{
+    if(doc.exists) cache.pos[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("po").set({items:[]});
+    if(cb) cb("pos");
+    refreshCurrentPage();
+  }, err=>console.error(err));
+
+  const u5 = apotekRef().collection("meta").doc("faktur").onSnapshot(doc=>{
+    if(doc.exists) cache.fakturs[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("faktur").set({items:[]});
+    if(cb) cb("fakturs");
+    refreshCurrentPage();
+  }, err=>console.error(err));
+
+  if(!cache.suppliers[aid]) cache.suppliers[aid]=[];
+  const u6 = apotekRef().collection("meta").doc("suppliers").onSnapshot(doc=>{
+    if(doc.exists) cache.suppliers[aid]=doc.data().items||[];
+    else apotekRef().collection("meta").doc("suppliers").set({items:[]});
+    if(cb) cb("suppliers");
+    refreshCurrentPage();
+  }, err=>console.error(err));
+
+  unsubscribers.push(u1,u2,u3,u4,u5,u6);
+}
+
+function getDrugs(){return cache.drugs[session.apotek.id]||[];}
+function getSales(){return cache.sales[session.apotek.id]||[];}
+function getCustomers(){return cache.customers[session.apotek.id]||[];}
+function getPOs(){return cache.pos[session.apotek.id]||[];}
+function getFakturs(){return cache.fakturs[session.apotek.id]||[];}
+function getSuppliers(){return cache.suppliers[session.apotek.id]||[];}
+
+async function saveDrugs(v){
+  cache.drugs[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("drugs").set({items:v});
+}
+async function saveSales(v){
+  cache.sales[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("sales").set({items:v});
+}
+async function saveCustomers(v){
+  cache.customers[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("customers").set({items:v});
+}
+async function savePOs(v){
+  cache.pos[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("po").set({items:v});
+}
+async function saveFakturs(v){
+  cache.fakturs[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("faktur").set({items:v});
+}
+async function saveSuppliers(v){
+  cache.suppliers[session.apotek.id]=v;
+  await apotekRef().collection("meta").doc("suppliers").set({items:v});
+}
+
+let idCounterCache = {};
+async function bumpId(){
+  const aid = session.apotek.id;
+  const ref = apotekRef().collection("meta").doc("counter");
+  const newId = await db.runTransaction(async(tx)=>{
+    const doc = await tx.get(ref);
+    const cur = doc.exists ? (doc.data().value||200) : 200;
+    const next = cur+1;
+    tx.set(ref,{value:next});
+    return next;
+  });
+  return newId;
+}
+
+// LOG
+async function addLog(apotekId,apotekName,username){
+  await db.collection("logs").add({apotekId,apotekName,username,time:new Date().toLocaleString("id-ID"),date:todayStr(),ts:Date.now()});
+}
+function listenLogs(cb){
+  const unsub = db.collection("logs").orderBy("ts","desc").limit(200).onSnapshot(snap=>{
+    cache.logs = snap.docs.map(d=>d.data());
+    if(cb) cb();
+  }, err=>console.error(err));
+  unsubscribers.push(unsub);
+}
+function getLogs(){ return cache.logs || []; }
+
+// Helper: fetch sales+drugs summary for ANY apotek (superadmin views)
+let saDataCache = {}; // {apotekId: {sales, drugs, ts}}
+async function fetchApotekSummary(apotekId){
+  const cached = saDataCache[apotekId];
+  if(cached && (Date.now()-cached.ts)<15000) return cached; // 15s cache to avoid spamming reads
+  try{
+    const [salesDoc, drugsDoc] = await Promise.all([
+      db.collection("apoteks").doc(apotekId).collection("meta").doc("sales").get(),
+      db.collection("apoteks").doc(apotekId).collection("meta").doc("drugs").get(),
+    ]);
+    const sales = salesDoc.exists ? (salesDoc.data().items||[]) : [];
+    const drugs = drugsDoc.exists ? (drugsDoc.data().items||[]) : JSON.parse(JSON.stringify(SEED_DRUGS));
+    const result = {sales,drugs,ts:Date.now()};
+    saDataCache[apotekId]=result;
+    return result;
+  }catch(e){
+    console.error(e);
+    return {sales:[],drugs:[],ts:Date.now()};
+  }
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function todayStr(){return new Date().toISOString().split("T")[0];}
+function fmt(n){return new Intl.NumberFormat("id-ID").format(n);}
+function fmtCur(n){return"Rp "+fmt(n);}
+function dayDiff(d){return Math.ceil((new Date(d)-new Date(todayStr()))/86400000);}
+function badge(t,c){return`<span class="badge ${c}">${t}</span>`;}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function closeModal(){document.getElementById("modal-area").innerHTML="";}
+
+// ══════════════════════════════════════════════
+// FORGOT PASSWORD MODAL (login screen)
+// ══════════════════════════════════════════════
+function openForgotPwModal(){
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+      <div class="modal-title">🔑 Lupa Kata Sandi</div>
+      <div class="info-box">Hubungi Super Admin (WA/telpon) untuk meminta kode reset 6 digit, lalu masukkan di bawah ini bersama kata sandi baru.</div>
+      <div class="form-group">
+        <label class="form-label">Username Apotek *</label>
+        <input class="inp" id="fp-user" placeholder="Username akun apotek"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kode Reset (6 digit) *</label>
+        <input class="inp" id="fp-code" placeholder="Cth: 482913" maxlength="6" style="letter-spacing:.2em;font-family:'JetBrains Mono',monospace;text-align:center;font-size:18px"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kata Sandi Baru *</label>
+        <input type="password" class="inp" id="fp-newpass" placeholder="Min. 6 karakter"/>
+      </div>
+      <div class="login-err" id="fp-err" style="display:none"></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" onclick="submitForgotPw()">Reset Kata Sandi</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function submitForgotPw(){
+  const username=document.getElementById("fp-user").value.trim();
+  const code=document.getElementById("fp-code").value.trim();
+  const newPass=document.getElementById("fp-newpass").value;
+  const errEl=document.getElementById("fp-err");
+  errEl.style.display="none";
+
+  if(!username||!code||!newPass){
+    errEl.textContent="Lengkapi semua field";errEl.style.display="block";return;
+  }
+  if(newPass.length<6){
+    errEl.textContent="Kata sandi baru minimal 6 karakter";errEl.style.display="block";return;
+  }
+
+  const btn=document.querySelector(".modal .btn-primary");
+  btn.textContent="Memproses...";btn.disabled=true;
+
+  try{
+    if(cache.apoteks===null){
+      await ensureDefaultApotek();
+      await new Promise(resolve=>{listenApoteks(()=>resolve());});
+    }
+    const result=await redeemResetCode(username, code, newPass);
+    if(result.ok){
+      closeModal();
+      showToast("Kata sandi berhasil direset! Silakan masuk dengan sandi baru.");
+    }else{
+      errEl.textContent=result.msg;errEl.style.display="block";
+      btn.textContent="Reset Kata Sandi";btn.disabled=false;
+    }
+  }catch(e){
+    console.error(e);
+    errEl.textContent="Gagal terhubung ke server. Periksa koneksi internet.";errEl.style.display="block";
+    btn.textContent="Reset Kata Sandi";btn.disabled=false;
+  }
+}
+
+
+function unitBadge(u){
+  const map={Tablet:"unit-tablet",Kapsul:"unit-kapsul",Strip:"unit-strip",Dus:"unit-dus",Botol:"unit-botol"};
+  return`<span class="badge ${map[u]||"unit-lainnya"}">${esc(u)}</span>`;
+}
+
+// ── Helper konversi kemasan berjenjang ──────────────────────────────────────
+// kemasan[0] = satuan terkecil (basis stok). kemasan[n].isi = qty kemasan[n-1] di dalamnya.
+function kemasanBaseQty(drug, kemasanIndex){
+  // Berapa satuan terkecil setara 1 unit kemasan pada index tsb
+  let qty=1;
+  for(let i=1;i<=kemasanIndex;i++) qty *= (drug.kemasan[i].isi||1);
+  return qty;
+}
+function findKemasanByName(drug,name){
+  return (drug.kemasan||[]).find(k=>k.name===name);
+}
+function kemasanIndexByName(drug,name){
+  return (drug.kemasan||[]).findIndex(k=>k.name===name);
+}
+// Satuan terkecil (untuk tampilan stok, dsb)
+function baseUnitName(drug){
+  return drug.kemasan&&drug.kemasan[0]?drug.kemasan[0].name:"Unit";
+}
+// Harga jual kemasan tertentu (by name)
+function kemasanPrice(drug,name){
+  const k=findKemasanByName(drug,name);
+  return k?(k.price||0):0;
+}
+function showToast(msg,type="ok"){
+  const el=document.createElement("div");
+  el.className=`toast-item toast-${type}`;
+  el.textContent=(type==="ok"?"✓ ":type==="err"?"✕ ":"ℹ ")+msg;
+  document.getElementById("toast").appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+function togglePw(){
+  const inp=document.getElementById("login-pass");
+  const eye=document.getElementById("pw-eye");
+  if(inp.type==="password"){inp.type="text";eye.textContent="🙈";}
+  else{inp.type="password";eye.textContent="👁";}
+}
+
+// ══════════════════════════════════════════════
+// LOGIN / LOGOUT
+// ══════════════════════════════════════════════
+async function doLogin(){
+  const user=document.getElementById("login-user").value.trim();
+  const pass=document.getElementById("login-pass").value;
+  const err=document.getElementById("login-err");
+  const btn=document.querySelector("#login-screen .btn-primary");
+  if(!user||!pass){err.textContent="Masukkan username dan kata sandi!";err.style.display="block";return;}
+
+  btn.textContent="Memeriksa...";btn.disabled=true;
+
+  try{
+    // Check superadmin
+    if(user===SUPERADMIN.username && pass===SUPERADMIN.password){
+      session={type:"superadmin"};
+      sessionStorage.setItem("chesa_session",JSON.stringify(session));
+      err.style.display="none";
+      await launchApp();return;
+    }
+
+    // Ensure apoteks loaded from Firestore
+    if(cache.apoteks===null){
+      await ensureDefaultApotek();
+      await new Promise(resolve=>{
+        listenApoteks(()=>resolve());
+      });
+    }
+
+    const apoteks=getApoteks();
+    const apotek=apoteks.find(a=>a.active && a.username===user && a.password===pass);
+    if(apotek){
+      session={type:"apotek",apotek};
+      sessionStorage.setItem("chesa_session",JSON.stringify(session));
+      addLog(apotek.id, apotek.name, user);
+      err.style.display="none";
+      await launchApp();return;
+    }
+
+    err.textContent="Username atau kata sandi salah!";
+    err.style.display="block";
+  }catch(e){
+    console.error(e);
+    err.textContent="Gagal terhubung ke server. Periksa koneksi internet.";
+    err.style.display="block";
+  }finally{
+    btn.textContent="Masuk →";btn.disabled=false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// RESET SANDI MANDIRI (kode dari Super Admin)
+// ══════════════════════════════════════════════
+function openResetForm(){
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+      <div class="modal-title">Reset Kata Sandi</div>
+      <div class="info-box">Hubungi Super Admin (WA/telepon) untuk meminta kode reset. Kode berlaku 1x pakai dan kedaluwarsa dalam 30 menit.</div>
+      <div class="form-group"><label class="form-label">Username Apotek *</label><input class="inp" id="rs-user" placeholder="Username login apotek"/></div>
+      <div class="form-group"><label class="form-label">Kode Reset (6 digit) *</label><input class="inp" id="rs-code" maxlength="6" inputmode="numeric" placeholder="123456" style="letter-spacing:.3em;font-family:'JetBrains Mono',monospace"/></div>
+      <div class="form-group"><label class="form-label">Kata Sandi Baru * (min. 6 karakter)</label><input type="password" class="inp" id="rs-pass"/></div>
+      <div class="form-group"><label class="form-label">Ulangi Kata Sandi Baru *</label><input type="password" class="inp" id="rs-pass2"/></div>
+      <div class="login-err" id="rs-err" style="display:none"></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" id="rs-btn" onclick="submitReset()">Simpan Sandi Baru</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function submitReset(){
+  const user=document.getElementById("rs-user").value.trim();
+  const code=document.getElementById("rs-code").value.trim();
+  const p1=document.getElementById("rs-pass").value;
+  const p2=document.getElementById("rs-pass2").value;
+  const err=document.getElementById("rs-err");
+  const btn=document.getElementById("rs-btn");
+  const fail=m=>{err.textContent=m;err.style.display="block";};
+  if(!user||!code||!p1||!p2){fail("Lengkapi semua kolom.");return;}
+  if(p1.length<6){fail("Kata sandi baru minimal 6 karakter.");return;}
+  if(p1!==p2){fail("Konfirmasi kata sandi tidak sama.");return;}
+  btn.disabled=true;btn.textContent="Memeriksa...";
+  try{
+    const snap=await db.collection("apoteks").where("username","==",user).get();
+    if(snap.empty){fail("Username tidak ditemukan.");return;}
+    const apotek=snap.docs[0].data();
+    const ref=db.collection("resetCodes").doc(apotek.id);
+    let ok=false,msg="Kode salah atau sudah tidak berlaku.";
+    // transaksi: cek kode + tandai terpakai secara atomik (1x pakai)
+    await db.runTransaction(async tx=>{
+      const d=await tx.get(ref);
+      if(!d.exists) return;
+      const r=d.data();
+      if(r.used){msg="Kode sudah pernah dipakai. Minta kode baru ke Super Admin.";return;}
+      if(Date.now()>r.expiresAt){msg="Kode sudah kedaluwarsa. Minta kode baru ke Super Admin.";return;}
+      if(r.code!==code) return;
+      tx.update(ref,{used:true,usedAt:Date.now()});
+      ok=true;
+    });
+    if(!ok){fail(msg);return;}
+    await db.collection("apoteks").doc(apotek.id).update({password:p1});
+    closeModal();
+    showToast("Kata sandi berhasil diubah. Silakan masuk.");
+    document.getElementById("login-user").value=user;
+    document.getElementById("login-pass").value="";
+  }catch(e){
+    console.error(e);
+    fail("Gagal terhubung ke server. Periksa koneksi internet.");
+  }finally{
+    if(document.getElementById("rs-btn")){btn.disabled=false;btn.textContent="Simpan Sandi Baru";}
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem("chesa_session");
+  clearListeners();
+  session=null;cart=[];
+  document.getElementById("app").style.display="none";
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("login-user").value="";
+  document.getElementById("login-pass").value="";
+}
+
+async function restoreSession(){
+  try{
+    const s=JSON.parse(sessionStorage.getItem("chesa_session")||"null");
+    if(!s)return false;
+    if(s.type==="superadmin"){session=s;return true;}
+    if(s.type==="apotek"){
+      await ensureDefaultApotek();
+      await new Promise(resolve=>{listenApoteks(()=>resolve());});
+      const apoteks=getApoteks();
+      const ap=apoteks.find(a=>a.id===s.apotek.id);
+      if(!ap||!ap.active)return false;
+      session={type:"apotek",apotek:ap};return true;
+    }
+  }catch(e){console.error(e);}
+  return false;
+}
+
+async function launchApp(){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app").style.display="flex";
+  document.getElementById("sidebar-date").textContent=new Date().toLocaleDateString("id-ID",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+  document.getElementById("topbar-logo-img").src=document.getElementById("app-logo-src").src;
+
+  if(session.type==="superadmin"){
+    document.getElementById("topbar-badge").className="topbar-badge badge-superadmin";
+    document.getElementById("topbar-badge").textContent="Super Admin";
+    document.getElementById("topbar-user").textContent="superadmin";
+    await ensureDefaultApotek();
+    if(cache.apoteks===null){
+      await new Promise(resolve=>{listenApoteks(()=>resolve());});
+    }
+    listenLogs(()=>{ if(document.getElementById("page-sa-logs").classList.contains("active")) renderLogs(); });
+    buildSuperAdminNav();
+    showPage("sa-dashboard", document.querySelector(".nav-item"));
+  } else {
+    document.getElementById("topbar-badge").className="topbar-badge badge-apotek";
+    document.getElementById("topbar-badge").textContent=session.apotek.name;
+    document.getElementById("topbar-user").textContent=session.apotek.username+" (Admin)";
+    await new Promise(resolve=>{
+      let count=0;
+      listenApotekData(()=>{ count++; if(count>=3) resolve(); refreshCurrentPage(); });
+    });
+    buildApotekNav();
+    showPage("dashboard", document.querySelector(".nav-item"));
+  }
+}
+
+function refreshCurrentPage(){
+  const active=document.querySelector(".page.active");
+  if(!active) return;
+  const id=active.id.replace("page-","");
+  buildApotekNav();
+  if(id==="dashboard")renderDashboard();
+  if(id==="cashier")resetCashierView();
+  if(id==="drugs")renderDrugsTable();
+  if(id==="expired")renderExpired();
+  if(id==="purchasing")renderPurchasing();
+  if(id==="sales")renderSalesTable();
+  if(id==="customers")renderCustTable();
+  if(id==="reports")renderReports();
+}
+
+function resetCashierView(){
+  const main=document.getElementById("cashier-main");
+  const detail=document.getElementById("item-detail-screen");
+  const pay=document.getElementById("payment-screen");
+  if(main)main.style.display="block";
+  if(detail)detail.style.display="none";
+  if(pay)pay.style.display="none";
+  const search=document.getElementById("drug-search");
+  if(search)search.value="";
+  const dropdown=document.getElementById("search-results");
+  if(dropdown)dropdown.classList.remove("open");
+  renderCart();
+}
+
+// ══════════════════════════════════════════════
+// NAV BUILDERS
+// ══════════════════════════════════════════════
+function buildSuperAdminNav(){
+  document.getElementById("sidebar-nav").innerHTML=`
+    <div class="nav-label">Super Admin</div>
+    <button class="nav-item active" onclick="showPage('sa-dashboard',this)">📊 &nbsp;Dashboard</button>
+    <button class="nav-item" onclick="showPage('sa-apoteks',this)">🏪 &nbsp;Manajemen Apotek</button>
+    <button class="nav-item" onclick="showPage('sa-monitor',this)">👁 &nbsp;Monitor Apotek</button>
+    <button class="nav-item" onclick="showPage('sa-logs',this)">📋 &nbsp;Log Aktivitas</button>`;
+}
+
+function buildApotekNav(){
+  const drugs=getDrugs();
+  const exp=drugs.filter(d=>dayDiff(d.expiry)<=0).length;
+  const near=drugs.filter(d=>dayDiff(d.expiry)>0&&dayDiff(d.expiry)<=90).length;
+  const low=drugs.filter(d=>d.stock<=d.minStock).length;
+  document.getElementById("sidebar-nav").innerHTML=`
+    <div class="nav-label">Menu</div>
+    <button class="nav-item" onclick="showPage('dashboard',this)">🏠 &nbsp;Dashboard</button>
+    <button class="nav-item" onclick="showPage('cashier',this)">🛒 &nbsp;Kasir / POS</button>
+    <button class="nav-item" onclick="showPage('drugs',this)">💊 &nbsp;Data Obat${low>0?` <span class="nav-badge warn">${low}</span>`:""}</button>
+    <button class="nav-item" onclick="showPage('expired',this)">⚠️ &nbsp;Expired${exp+near>0?` <span class="nav-badge">${exp+near}</span>`:""}</button>
+    <button class="nav-item" onclick="showPage('purchasing',this)">📦 &nbsp;Pembelian</button>
+    <button class="nav-item" onclick="showPage('sales',this)">🧾 &nbsp;Riwayat Penjualan</button>
+    <button class="nav-item" onclick="showPage('customers',this)">👥 &nbsp;Pelanggan</button>
+    <button class="nav-item" onclick="showPage('reports',this)">📊 &nbsp;Laporan</button>`;
+}
+
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  if(btn)btn.classList.add("active");
+  if(id==="sa-dashboard")renderSADashboard();
+  if(id==="sa-apoteks")renderApotekCards();
+  if(id==="sa-monitor")renderMonitor();
+  if(id==="sa-logs")renderLogs();
+  if(id==="dashboard"){buildApotekNav();renderDashboard();}
+  if(id==="cashier")resetCashierView();
+  if(id==="drugs")renderDrugsTable();
+  if(id==="expired")renderExpired();
+  if(id==="purchasing")renderPurchasing();
+  if(id==="sales")renderSalesTable();
+  if(id==="customers")renderCustTable();
+  if(id==="reports")renderReports();
+}
+
+// ══════════════════════════════════════════════
+// SUPERADMIN — DASHBOARD
+// ══════════════════════════════════════════════
+async function renderSADashboard(){
+  const apoteks=getApoteks();
+  const active=apoteks.filter(a=>a.active).length;
+  const inactive=apoteks.filter(a=>!a.active).length;
+  const logs=getLogs();
+  const todayLogs=logs.filter(l=>l.date===todayStr());
+
+  document.getElementById("page-sa-dashboard").innerHTML=`
+  <div class="hero-card">
+    <div style="display:inline-block;background:#fff;border-radius:12px;padding:6px 12px;margin-bottom:10px"><img src="${document.getElementById('app-logo-src').src}" alt="Apotek Chesa Farma" style="height:36px;width:auto;display:block"/></div>
+    <div style="font-size:13px;opacity:.85;font-weight:600;letter-spacing:.02em">Super Admin</div>
+    <div style="font-size:26px;font-weight:800;margin-top:4px">${apoteks.length} Apotek Terdaftar</div>
+    <div style="font-size:13px;opacity:.9;margin-top:4px">${active} aktif · ${inactive} nonaktif</div>
+  </div>
+  <div class="stat-grid" id="sa-stat-grid" style="margin-top:16px;grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card" style="--c:#0f7a3d"><div class="stat-label">Pendapatan Hari Ini</div><div class="stat-val" id="sa-rev">…</div><div class="stat-sub" id="sa-trx">memuat...</div></div>
+    <div class="stat-card" style="--c:#dc2626"><div class="stat-label">Peringatan Expired</div><div class="stat-val" id="sa-exp">…</div><div class="stat-sub">Seluruh apotek</div></div>
+    <div class="stat-card" style="--c:#15803d"><div class="stat-label">Login Hari Ini</div><div class="stat-val">${todayLogs.length}</div><div class="stat-sub">Aktivitas login</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div style="font-weight:800;font-size:14px;margin-bottom:14px">🏪 Status Apotek</div>
+      <div id="sa-status-list">${apoteks.map(a=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f1f5f9">
+          <div><div style="font-weight:700;font-size:13.5px">${esc(a.icon)} ${esc(a.name)}</div>
+          <div style="font-size:12px;color:var(--muted)" id="sa-status-${a.id}">memuat...</div></div>
+          ${badge(a.active?"Aktif":"Nonaktif",a.active?"bg-green":"bg-gray")}
+        </div>`).join("")}</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;font-size:14px;margin-bottom:14px">📋 Login Terakhir</div>
+      ${logs.slice(0,8).map(l=>`
+        <div class="log-item">
+          <div><div style="font-weight:600">${esc(l.apotekName)}</div>
+          <div style="font-size:12px;color:var(--muted)">${esc(l.username)} · ${esc(l.time)}</div></div>
+        </div>`).join("") || `<div style="color:var(--muted);font-size:13px">Belum ada log</div>`}
+    </div>
+  </div>`;
+
+  // Async fetch per-apotek summaries, then fill in
+  let totalRev=0,totalTrx=0,totalExpired=0;
+  await Promise.all(apoteks.map(async(a)=>{
+    const {sales,drugs}=await fetchApotekSummary(a.id);
+    const today=sales.filter(s=>s.date===todayStr());
+    const rev=today.reduce((x,s)=>x+s.total,0), trx=today.length;
+    totalRev+=rev;totalTrx+=trx;
+    totalExpired+=drugs.filter(d=>dayDiff(d.expiry)<=0||dayDiff(d.expiry)<=90).length;
+    const statusEl=document.getElementById(`sa-status-${a.id}`);
+    if(statusEl) statusEl.textContent=`${trx} transaksi hari ini · ${fmtCur(rev)}`;
+  }));
+  const revEl=document.getElementById("sa-rev"); if(revEl) revEl.textContent=fmtCur(totalRev);
+  const trxEl=document.getElementById("sa-trx"); if(trxEl) trxEl.textContent=totalTrx+" transaksi";
+  const expEl=document.getElementById("sa-exp"); if(expEl) expEl.textContent=totalExpired;
+}
+
+// ══════════════════════════════════════════════
+// SUPERADMIN — MANAJEMEN APOTEK
+// ══════════════════════════════════════════════
+async function renderApotekCards(){
+  const apoteks=getApoteks();
+  document.getElementById("apotek-cards").innerHTML=apoteks.map(a=>`<div class="apotek-card">
+      <div class="apotek-card-header">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="apotek-icon" style="background:${a.active?"var(--primary-light)":"#f1f5f9"}">${a.icon}</div>
+          <div>
+            <div style="font-weight:800;font-size:15px">${esc(a.name)}</div>
+            <div style="font-size:12px;color:var(--muted)">${esc(a.address)}</div>
+          </div>
+        </div>
+        ${badge(a.active?"Aktif":"Nonaktif",a.active?"bg-green":"bg-gray")}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px" id="ac-stats-${a.id}">
+        <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600">TOTAL TRX</div>
+          <div style="font-weight:800;color:var(--primary)">…</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600">OMZET</div>
+          <div style="font-weight:800;color:var(--success);font-size:12px">…</div>
+        </div>
+        <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600">EXPIRED</div>
+          <div style="font-weight:800">…</div>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">KREDENSIAL LOGIN</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
+          <span style="font-size:12px;min-width:70px;font-weight:600">Username:</span>
+          <span class="pw-text">${esc(a.username)}</span>
+        </div>
+        <div class="pw-field">
+          <span style="font-size:12px;min-width:70px;font-weight:600">Password:</span>
+          <span class="pw-text" id="pw-${a.id}">••••••••</span>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="toggleShowPw('${a.id}','${esc(a.password)}')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:12px" onclick="openApotekModal('${a.id}')">✏️ Edit</button>
+        <button class="btn btn-warning" style="font-size:12px" onclick="resetPassword('${a.id}')">🔑 Reset PW</button>
+        <button class="btn btn-purple" style="font-size:12px;padding:7px 13px" onclick="generateResetCode('${a.id}')">🎫 Generate Kode</button>
+        <button class="btn ${a.active?"btn-ghost":"btn-primary"}" style="font-size:12px" onclick="toggleApotekStatus('${a.id}')">${a.active?"⏸ Nonaktifkan":"▶ Aktifkan"}</button>
+        <button class="btn btn-danger" style="font-size:12px" onclick="deleteApotek('${a.id}')">🗑 Hapus</button>
+      </div>
+    </div>`).join("");
+
+  // Fill in stats async
+  apoteks.forEach(async(a)=>{
+    const {sales,drugs}=await fetchApotekSummary(a.id);
+    const totalSales=sales.reduce((x,y)=>x+y.total,0), totalTrx=sales.length;
+    const expiredCount=drugs.filter(x=>dayDiff(x.expiry)<=0).length;
+    const el=document.getElementById(`ac-stats-${a.id}`);
+    if(!el) return;
+    el.innerHTML=`
+      <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">TOTAL TRX</div>
+        <div style="font-weight:800;color:var(--primary)">${totalTrx}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">OMZET</div>
+        <div style="font-weight:800;color:var(--success);font-size:12px">${fmtCur(totalSales)}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:9px;padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);font-weight:600">EXPIRED</div>
+        <div style="font-weight:800;color:${expiredCount>0?"var(--danger)":"var(--success)"}">${expiredCount}</div>
+      </div>`;
+  });
+}
+
+function toggleShowPw(id,pw){
+  const el=document.getElementById("pw-"+id);
+  el.textContent=el.textContent==="••••••••"?pw:"••••••••";
+}
+
+function openApotekModal(id){
+  const apoteks=getApoteks();
+  const a=id?apoteks.find(x=>x.id===id):{id:"",name:"",address:"",icon:"💊",username:"",password:"",active:true,createdAt:todayStr()};
+  const icons=["💊","🏥","💉","🩺","🧪","🏪","⚕️"];
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">${id?"Edit Apotek":"Tambah Apotek Baru"}</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Nama Apotek *</label>
+          <input class="inp" id="a-name" value="${esc(a.name)}" placeholder="Nama apotek"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Alamat</label>
+          <input class="inp" id="a-addr" value="${esc(a.address)}" placeholder="Alamat apotek"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username Login *</label>
+          <input class="inp" id="a-user" value="${esc(a.username)}" placeholder="Cth: apotek_sehat"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input class="inp" id="a-pass" value="${esc(a.password)}" placeholder="Min. 6 karakter"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ID Unik *</label>
+          <input class="inp" id="a-id" value="${esc(a.id)}" placeholder="Cth: apotek_sehat" ${id?"readonly style='background:#f8fafc'":""}/>
+          ${!id?`<div style="font-size:11.5px;color:var(--muted);margin-top:4px">Huruf kecil, angka, underscore saja. Tidak bisa diubah.</div>`:""}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Icon</label>
+          <select class="inp" id="a-icon">${icons.map(i=>`<option${a.icon===i?" selected":""}>${i}</option>`).join("")}</select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-purple" onclick="saveApotek('${id||""}')">Simpan</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function saveApotek(id){
+  const name=document.getElementById("a-name").value.trim();
+  const aId=document.getElementById("a-id").value.trim().replace(/\s+/g,"_");
+  const user=document.getElementById("a-user").value.trim();
+  const pass=document.getElementById("a-pass").value;
+  if(!name||!aId||!user||!pass){showToast("Lengkapi semua field wajib","err");return;}
+  if(pass.length<6){showToast("Password minimal 6 karakter","err");return;}
+  const apoteks=getApoteks();
+  if(!id && apoteks.find(a=>a.id===aId)){showToast("ID sudah digunakan apotek lain","err");return;}
+  if(!id && apoteks.find(a=>a.username===user)){showToast("Username sudah digunakan","err");return;}
+  const obj={
+    id:id||aId, name,
+    address:document.getElementById("a-addr").value,
+    icon:document.getElementById("a-icon").value,
+    username:user, password:pass,
+    active:id?(apoteks.find(a=>a.id===id)||{}).active!==false:true,
+    createdAt:id?(apoteks.find(a=>a.id===id)||{}).createdAt||todayStr():todayStr()
+  };
+  closeModal();
+  showToast(id?"Menyimpan perubahan...":"Menambahkan apotek...", "ok");
+  try{
+    await saveApoteksSingle(obj);
+    showToast(id?"Data apotek diperbarui":"Apotek baru ditambahkan!");
+  }catch(e){console.error(e);showToast("Gagal menyimpan — periksa koneksi","err");}
+}
+
+async function resetPassword(id){
+  const newPw=prompt("Masukkan password baru (min. 6 karakter):");
+  if(!newPw)return;
+  if(newPw.length<6){showToast("Password minimal 6 karakter","err");return;}
+  const apoteks=getApoteks();
+  const a=apoteks.find(x=>x.id===id);
+  const updated={...a,password:newPw};
+  try{
+    await saveApoteksSingle(updated);
+    showToast("Password berhasil direset!");
+  }catch(e){console.error(e);showToast("Gagal reset password","err");}
+}
+
+async function generateResetCode(id){
+  const a=getApoteks().find(x=>x.id===id);
+  if(!a) return;
+  const code=String(Math.floor(100000+Math.random()*900000));
+  const expiresAt=Date.now()+30*60*1000;
+  try{
+    await db.collection("resetCodes").doc(id).set({code,used:false,createdAt:Date.now(),expiresAt});
+  }catch(e){console.error(e);showToast("Gagal membuat kode","err");return;}
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" style="max-width:380px;text-align:center" onclick="event.stopPropagation()">
+      <div class="modal-title">Kode Reset Sandi</div>
+      <div style="font-size:13.5px;color:var(--muted);margin-bottom:14px">${esc(a.name)}<br>Username: <b>${esc(a.username)}</b></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;letter-spacing:.25em;color:var(--primary);background:var(--primary-light);border-radius:14px;padding:18px 10px;margin-bottom:14px">${code}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:16px">Berlaku 30 menit dan hanya bisa dipakai 1x. Sampaikan ke admin apotek lewat WA atau telepon. Membuat kode baru akan membatalkan kode lama.</div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-primary" onclick="navigator.clipboard&&navigator.clipboard.writeText('${code}');showToast('Kode disalin')">Salin Kode</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Tutup</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function toggleApotekStatus(id){
+  const apoteks=getApoteks();
+  const a=apoteks.find(x=>x.id===id);
+  const updated={...a,active:!a.active};
+  try{
+    await saveApoteksSingle(updated);
+    showToast(updated.active?"Apotek diaktifkan":"Apotek dinonaktifkan");
+  }catch(e){console.error(e);showToast("Gagal mengubah status","err");}
+}
+
+async function deleteApotek(id){
+  const apoteks=getApoteks();
+  const a=apoteks.find(x=>x.id===id);
+  if(!confirm(`Hapus ${a.name}? Data penjualan & obat apotek ini akan hilang!`))return;
+  showToast("Menghapus apotek...","ok");
+  try{
+    await deleteApotekDoc(id);
+    showToast("Apotek dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus apotek","err");}
+}
+
+// ══════════════════════════════════════════════
+// SUPERADMIN — MONITOR
+// ══════════════════════════════════════════════
+async function renderMonitor(){
+  const period=(document.getElementById("monitor-period")||{}).value||"today";
+  const apoteks=getApoteks();
+  const now=new Date();
+
+  document.getElementById("monitor-content").innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted)">Memuat data seluruh apotek...</div>`;
+
+  let grandRev=0,grandTrx=0;
+  const data=await Promise.all(apoteks.map(async(a)=>{
+    const {sales,drugs}=await fetchApotekSummary(a.id);
+    let filtered=sales;
+    if(period==="today")filtered=sales.filter(s=>s.date===todayStr());
+    else if(period==="week"){const w=new Date();w.setDate(w.getDate()-7);filtered=sales.filter(s=>new Date(s.date)>=w);}
+    else if(period==="month")filtered=sales.filter(s=>s.date.startsWith(now.toISOString().slice(0,7)));
+    const rev=filtered.reduce((x,s)=>x+s.total,0);
+    grandRev+=rev;grandTrx+=filtered.length;
+    const expired=drugs.filter(d=>dayDiff(d.expiry)<=0).length;
+    const lowStock=drugs.filter(d=>d.stock<=d.minStock).length;
+    return{...a,rev,trx:filtered.length,expired,lowStock};
+  }));
+
+  document.getElementById("monitor-content").innerHTML=`
+  <div class="stat-grid-3" style="margin-bottom:20px">
+    <div class="stat-card" style="--c:#7c3aed"><div class="stat-label">Total Apotek Aktif</div><div class="stat-val">${apoteks.filter(a=>a.active).length}</div></div>
+    <div class="stat-card" style="--c:#0f7a3d"><div class="stat-label">Total Penjualan</div><div class="stat-val">${fmtCur(grandRev)}</div><div class="stat-sub">${grandTrx} transaksi</div></div>
+    <div class="stat-card" style="--c:#dc2626"><div class="stat-label">Total Obat Expired</div><div class="stat-val">${data.reduce((x,a)=>x+a.expired,0)}</div><div class="stat-sub">Seluruh apotek</div></div>
+  </div>
+  <div class="tbl-wrap"><table><thead><tr>
+    <th>Apotek</th><th>Status</th><th>Transaksi</th><th>Penjualan</th><th>Obat Expired</th><th>Stok Menipis</th>
+  </tr></thead><tbody>
+  ${data.map(a=>`<tr>
+    <td><div style="font-weight:700">${esc(a.icon)} ${esc(a.name)}</div><div style="font-size:12px;color:var(--muted)">${esc(a.address)}</div></td>
+    <td>${badge(a.active?"Aktif":"Nonaktif",a.active?"bg-green":"bg-gray")}</td>
+    <td style="font-weight:700">${a.trx}x</td>
+    <td style="font-weight:800;color:var(--primary)">${fmtCur(a.rev)}</td>
+    <td>${a.expired>0?badge(a.expired+" obat","bg-red"):badge("Aman","bg-green")}</td>
+    <td>${a.lowStock>0?badge(a.lowStock+" item","bg-yellow"):badge("Aman","bg-green")}</td>
+  </tr>`).join("")}
+  </tbody></table></div>`;
+}
+
+// ══════════════════════════════════════════════
+// SUPERADMIN — LOGS
+// ══════════════════════════════════════════════
+function renderLogs(){
+  const logs=getLogs();
+  document.getElementById("log-content").innerHTML=`
+    <div style="font-weight:800;font-size:14px;margin-bottom:16px">📋 Riwayat Login (${logs.length} aktivitas)</div>`+
+    (logs.length===0?`<div style="color:var(--muted);font-size:13px">Belum ada log aktivitas</div>`:
+    logs.map(l=>`<div class="log-item">
+      <div>
+        <div style="font-weight:700">${esc(l.apotekName)}</div>
+        <div style="font-size:12px;color:var(--muted)">Username: ${esc(l.username)} · ${esc(l.time)}</div>
+      </div>
+      ${badge(l.date===todayStr()?"Hari ini":"","bg-blue")}
+    </div>`).join(""));
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard(){
+  const drugs=getDrugs(),sales=getSales();
+  const todaySales=sales.filter(s=>s.date===todayStr());
+  const todayRev=todaySales.reduce((a,s)=>a+s.total,0);
+  const ms=new Date().toISOString().slice(0,7);
+  const monthSales=sales.filter(s=>s.date.startsWith(ms));
+  const monthRev=monthSales.reduce((a,s)=>a+s.total,0);
+  const expD=drugs.filter(d=>dayDiff(d.expiry)<=0);
+  const nearD=drugs.filter(d=>dayDiff(d.expiry)>0&&dayDiff(d.expiry)<=90);
+  const lowD=drugs.filter(d=>d.stock<=d.minStock);
+  document.getElementById("page-dashboard").innerHTML=`
+  <div class="hero-card">
+    <div style="display:inline-block;background:#fff;border-radius:12px;padding:6px 12px;margin-bottom:10px"><img src="${document.getElementById('app-logo-src').src}" alt="Apotek Chesa Farma" style="height:36px;width:auto;display:block"/></div>
+    <div style="font-size:13px;opacity:.85;font-weight:600;letter-spacing:.02em">${esc(session.apotek.name)}</div>
+    <div style="font-size:30px;font-weight:800;margin-top:4px">${fmtCur(todayRev)}</div>
+    <div style="font-size:13px;opacity:.9;margin-top:4px">Pendapatan hari ini · ${todaySales.length} transaksi</div>
+  </div>
+  <div class="stat-grid" style="margin-top:16px">
+    <div class="stat-card" style="--c:#0f7a3d"><div class="stat-label">Pendapatan Bulan Ini</div><div class="stat-val">${fmtCur(monthRev)}</div><div class="stat-sub">${monthSales.length} transaksi</div></div>
+    <div class="stat-card" style="--c:#15803d"><div class="stat-label">Total Jenis Obat</div><div class="stat-val">${drugs.length}</div><div class="stat-sub">${lowD.length} stok menipis</div></div>
+    <div class="stat-card" style="--c:#b45309"><div class="stat-label">Mendekati Expired</div><div class="stat-val">${nearD.length}</div><div class="stat-sub">≤ 90 hari lagi</div></div>
+    <div class="stat-card" style="--c:#dc2626"><div class="stat-label">Sudah Expired</div><div class="stat-val">${expD.length}</div><div class="stat-sub">Perlu ditindak</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div style="font-weight:800;font-size:14px;margin-bottom:14px">⚠️ Stok Menipis</div>
+      ${lowD.length===0?`<div style="color:var(--muted);font-size:13px">Semua stok aman ✓</div>`:
+      lowD.map(d=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-weight:600">${esc(d.name)}</span>${badge(d.stock+" "+d.unitJual,"bg-red")}</div>`).join("")}
+    </div>
+    <div class="card">
+      <div style="font-weight:800;font-size:14px;margin-bottom:14px">📅 Mendekati Expired</div>
+      ${[...expD,...nearD].length===0?`<div style="color:var(--muted);font-size:13px">Tidak ada ✓</div>`:
+      [...expD,...nearD].slice(0,6).map(d=>{const diff=dayDiff(d.expiry);return`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13.5px"><span style="font-weight:600">${esc(d.name)}</span>${badge(diff<=0?"EXPIRED":diff+"h lagi",diff<=0?"bg-red":diff<=30?"bg-yellow":"bg-blue")}</div>`;}).join("")}
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <div style="font-weight:800;font-size:14px;margin-bottom:14px">🧾 Transaksi Hari Ini</div>
+      ${todaySales.length===0?`<div style="color:var(--muted);font-size:13px">Belum ada transaksi hari ini</div>`:`
+      <table><thead><tr><th>#</th><th>Pelanggan</th><th>Item</th><th>Total</th><th>Resep</th></tr></thead><tbody>
+      ${todaySales.map(s=>`<tr><td style="font-family:'JetBrains Mono',monospace;font-size:12px">TRX-${String(s.id).padStart(4,"0")}</td><td>${esc(s.customer)}</td><td style="font-size:12px;color:var(--muted)">${s.items.map(i=>i.name+" x"+i.qty).join(", ")}</td><td style="font-weight:800;color:var(--primary)">${fmtCur(s.total)}</td><td>${s.resep?badge(s.resep,"bg-blue"):badge("Bebas","bg-gray")}</td></tr>`).join("")}
+      </tbody></table>`}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — CASHIER
+// ══════════════════════════════════════════════
+// Stok tampil dikombinasikan kemasan terbesar ke terkecil (mis. "18 dus (50s), 20 btr")
+function stockDisplay(d){
+  const kemasan=(d.kemasan&&d.kemasan.length)?d.kemasan:null;
+  if(!kemasan) return `${d.stock} ${esc(d.unitJual||"")}`;
+  let remaining=d.stock;
+  const parts=[];
+  for(let i=kemasan.length-1;i>=0;i--){
+    const baseQty=kemasanBaseQty(d,i);
+    if(baseQty<=0) continue;
+    const count=Math.floor(remaining/baseQty);
+    if(count>0 || (i===0 && parts.length===0)){
+      const label = i===0 ? kemasan[i].name : `${kemasan[i].name} (${kemasan[i].isi}${esc(kemasan[i-1].singkatan||kemasan[i-1].name)})`;
+      parts.push(`${count} ${esc(label)}`);
+      remaining -= count*baseQty;
+    }
+  }
+  return parts.length?parts.join(", "):`0 ${esc(baseUnitName(d))}`;
+}
+
+function renderSearchResults(){
+  const q=(document.getElementById("drug-search")||{}).value||"";
+  const dropdown=document.getElementById("search-results");
+  if(!dropdown) return;
+  if(!q.trim()){dropdown.classList.remove("open");dropdown.innerHTML="";return;}
+  const drugs=getDrugs().filter(d=>d.stock>0&&d.name.toLowerCase().includes(q.toLowerCase()));
+  if(drugs.length===0){
+    dropdown.innerHTML=`<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center">Tidak ada obat ditemukan</div>`;
+    dropdown.classList.add("open");
+    return;
+  }
+  dropdown.innerHTML=drugs.map(d=>{
+    const base=d.kemasan&&d.kemasan[0]?d.kemasan[0]:{name:d.unitJual,price:d.price};
+    return`<div class="search-result-item" onclick="openItemDetail(${d.id})">
+      <div>
+        <div class="search-result-name">${esc(d.name)}</div>
+        <div class="search-result-sub">${esc(d.batch)}</div>
+        <div class="search-result-stock">Stok: ${stockDisplay(d)}</div>
+      </div>
+      <div class="search-result-price">${fmtCur(base.price||0)}<div style="font-size:10.5px;color:var(--muted);font-weight:500">/${esc(base.name)}</div></div>
+    </div>`;
+  }).join("");
+  dropdown.classList.add("open");
+  const dl=document.getElementById("cust-datalist");
+  if(dl)dl.innerHTML=getCustomers().map(c=>`<option value="${esc(c.name)}"/>`).join("");
+}
+
+// ── Halaman Detail Item ──────────────────────────────────────────────────────
+let activeDetailDrugId=null;
+function openItemDetail(id){
+  const d=getDrugs().find(x=>x.id===id);
+  if(!d) return;
+  activeDetailDrugId=id;
+  document.getElementById("search-results").classList.remove("open");
+  document.getElementById("drug-search").value="";
+
+  const kemasanList=(d.kemasan&&d.kemasan.length)?d.kemasan:[{name:d.unitJual||"Unit",price:d.price||0}];
+  const sellable=kemasanList.filter(k=>(k.price||0)>0);
+  const list=sellable.length?sellable:kemasanList;
+
+  document.getElementById("item-detail-id").textContent=`#${String(d.id).padStart(6,"0")}`;
+  document.getElementById("item-detail-name").textContent=d.name;
+  document.getElementById("item-qty").value=1;
+  document.getElementById("item-disc-mode").value="percent";
+  document.getElementById("item-disc-value").value=0;
+  document.getElementById("item-unit").innerHTML=list.map(k=>{
+    const idx=kemasanIndexByName(d,k.name);
+    const belowUnit=idx>0?(d.kemasan[idx-1].singkatan||d.kemasan[idx-1].name):"";
+    return`<option value="${esc(k.name)}">${esc(k.name)}${k.isi&&idx>0?` (${k.isi}${esc(belowUnit)})`:""}</option>`;
+  }).join("");
+
+  document.getElementById("cashier-main").style.display="none";
+  document.getElementById("item-detail-screen").style.display="block";
+  updateItemDetailCalc();
+}
+function closeItemDetail(){
+  document.getElementById("item-detail-screen").style.display="none";
+  document.getElementById("cashier-main").style.display="block";
+  activeDetailDrugId=null;
+}
+function updateItemDetailCalc(){
+  const d=getDrugs().find(x=>x.id===activeDetailDrugId);
+  if(!d) return;
+  const unitName=document.getElementById("item-unit").value;
+  const qty=parseInt(document.getElementById("item-qty").value)||0;
+  const discMode=document.getElementById("item-disc-mode").value;
+  const discValue=parseFloat(document.getElementById("item-disc-value").value)||0;
+  const unitPrice=kemasanPrice(d,unitName);
+  const kIdx=kemasanIndexByName(d,unitName);
+  const baseQtyPerUnit=kIdx>=0?kemasanBaseQty(d,kIdx):1;
+
+  document.getElementById("item-detail-stock").textContent=`Stok ${stockDisplay(d)}`;
+
+  const gross=unitPrice*qty;
+  const discAmt=discMode==="percent"?Math.round(gross*discValue/100):Math.round(discValue);
+  const subtotal=Math.max(0,gross-discAmt);
+
+  document.getElementById("item-detail-calc").textContent=`${qty} x ${fmtCur(unitPrice)}${discAmt>0?` − diskon ${fmtCur(discAmt)}`:""}`;
+  document.getElementById("item-detail-subtotal").textContent=fmtCur(subtotal);
+
+  const maxQty=baseQtyPerUnit>0?Math.floor(d.stock/baseQtyPerUnit):0;
+  if(qty>maxQty && maxQty>=0){
+    document.getElementById("item-detail-stock").innerHTML=`<span style="color:var(--danger)">Stok tidak mencukupi (maks. ${maxQty} ${esc(unitName)})</span>`;
+  }
+}
+function addItemFromDetail(){
+  const d=getDrugs().find(x=>x.id===activeDetailDrugId);
+  if(!d) return;
+  const unitName=document.getElementById("item-unit").value;
+  const qty=parseInt(document.getElementById("item-qty").value)||0;
+  const discMode=document.getElementById("item-disc-mode").value;
+  const discValue=parseFloat(document.getElementById("item-disc-value").value)||0;
+  if(qty<=0){showToast("Jumlah harus lebih dari 0","err");return;}
+
+  const unitPrice=kemasanPrice(d,unitName);
+  const kIdx=kemasanIndexByName(d,unitName);
+  const baseQtyPerUnit=kIdx>=0?kemasanBaseQty(d,kIdx):1;
+  const gross=unitPrice*qty;
+  const discAmt=discMode==="percent"?Math.round(gross*discValue/100):Math.round(discValue);
+  const netPrice=qty>0?Math.max(0,gross-discAmt)/qty:0;
+
+  // Cek total stok terpakai (termasuk qty yang sudah ada di keranjang untuk kombinasi sama)
+  const cartKey=`${d.id}_${unitName}`;
+  const existing=cart.find(c=>c.cartKey===cartKey);
+  const totalQty=(existing?existing.qty:0)+qty;
+  if(baseQtyPerUnit*totalQty>d.stock){showToast("Stok tidak mencukupi","err");return;}
+
+  if(existing){
+    existing.qty=totalQty;
+    existing.price=netPrice;
+    existing.discAmt=(existing.discAmt||0)+discAmt;
+  } else {
+    cart.push({cartKey,drugId:d.id,name:d.name,price:netPrice,grossPrice:unitPrice,discAmt,unitJual:unitName,baseQtyPerUnit,batch:d.batch,qty});
+  }
+  closeItemDetail();
+  renderCart();
+  showToast("Ditambahkan ke keranjang");
+}
+
+// ── Keranjang ────────────────────────────────────────────────────────────────
+function updateQty(cartKey,q){
+  const idx=cart.findIndex(c=>c.cartKey===cartKey);if(idx===-1)return;
+  if(q<=0){cart.splice(idx,1);renderCart();return;}
+  const item=cart[idx];
+  const d=getDrugs().find(x=>x.id===item.drugId);
+  if(d){
+    const newBaseQty=item.baseQtyPerUnit*q;
+    if(newBaseQty>d.stock){showToast("Stok tidak mencukupi","err");return;}
+  }
+  cart[idx].qty=q;
+  renderCart();
+}
+function removeCartItem(cartKey){
+  cart=cart.filter(c=>c.cartKey!==cartKey);
+  renderCart();
+}
+function renderCart(){
+  const el=document.getElementById("cart-items");if(!el)return;
+  if(cart.length===0){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px 0;font-size:13px">Cari obat untuk ditambahkan</div>`;
+    document.getElementById("cart-summary").innerHTML="";return;
+  }
+  el.innerHTML=cart.map((c,i)=>`<div class="cart-item" style="padding:14px 18px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div style="font-weight:700;font-size:13.5px">${i+1}. ${esc(c.name)}</div>
+      <button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="removeCartItem('${c.cartKey}')">🗑</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${c.qty} ${esc(c.unitJual)} x ${fmtCur(c.grossPrice||c.price)}${c.discAmt?` · diskon ${fmtCur(c.discAmt)}`:""} · Batch: ${esc(c.batch)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="qty-btn" onclick="updateQty('${c.cartKey}',${c.qty-1})">−</button>
+        <span style="font-weight:800;min-width:22px;text-align:center">${c.qty}</span>
+        <button class="qty-btn" onclick="updateQty('${c.cartKey}',${c.qty+1})">+</button>
+      </div>
+      <span style="font-weight:800;color:var(--primary)">${fmtCur(c.price*c.qty)}</span>
+    </div>
+  </div>`).join("");
+  const sub=cart.reduce((a,c)=>a+c.price*c.qty,0);
+  document.getElementById("cart-summary").innerHTML=`
+    <div style="padding:16px 18px;border-top:1.5px solid var(--border);display:flex;flex-direction:column;gap:6px">
+      <div class="total-line big"><span>Total</span><span style="color:var(--primary)">${fmtCur(sub)}</span></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;font-size:15px;margin-top:6px" onclick="openPayment()">Bayar</button>
+    </div>`;
+}
+
+// ── Halaman Bayar ────────────────────────────────────────────────────────────
+function getCartTotal(){ return cart.reduce((a,c)=>a+c.price*c.qty,0); }
+function openPayment(){
+  if(cart.length===0){showToast("Keranjang kosong","err");return;}
+  const total=getCartTotal();
+  document.getElementById("pay-total").textContent=fmtCur(total);
+  document.getElementById("pay-input").value="";
+  document.getElementById("pay-change").textContent="Rp0";
+
+  const shortcuts=[0,6000,10000,20000,50000,100000]; // 0 = "Uang pas"
+  document.getElementById("pay-shortcuts").innerHTML=shortcuts.map(v=>
+    `<button class="btn btn-ghost" style="padding:10px 6px;font-size:12.5px" onclick="setPayShortcut(${v===0?total:v})">${v===0?"Uang pas":fmt(v)}</button>`
+  ).join("");
+
+  document.getElementById("cashier-main").style.display="none";
+  document.getElementById("payment-screen").style.display="block";
+}
+function closePayment(){
+  document.getElementById("payment-screen").style.display="none";
+  document.getElementById("cashier-main").style.display="block";
+}
+function setPayShortcut(v){
+  document.getElementById("pay-input").value=v;
+  updatePayChange();
+}
+function updatePayChange(){
+  const total=getCartTotal();
+  const paid=parseFloat(document.getElementById("pay-input").value)||0;
+  const change=paid-total;
+  document.getElementById("pay-change").textContent=fmtCur(Math.max(0,change));
+  document.getElementById("pay-change").style.color=change<0?"var(--danger)":"var(--success)";
+}
+async function finalizeCheckout(){
+  const total=getCartTotal();
+  const paid=parseFloat(document.getElementById("pay-input").value)||0;
+  if(paid<total){showToast("Pembayaran kurang","err");return;}
+  const customer=(document.getElementById("cart-customer")||{}).value||"Umum";
+  const resep=(document.getElementById("cart-resep")||{}).value||"";
+  const btn=document.querySelector("#payment-screen .btn-primary");
+  if(btn){btn.textContent="Memproses...";btn.disabled=true;}
+  try{
+    const id=await bumpId();
+    const sale={id,date:todayStr(),customer,items:cart.map(c=>({...c})),total,paid,change:paid-total,resep};
+    const drugs=getDrugs();
+    cart.forEach(it=>{
+      const d=drugs.find(x=>x.id===it.drugId);
+      if(d) d.stock -= (it.baseQtyPerUnit||1)*it.qty;
+    });
+    await saveDrugs(drugs);
+    const sales=getSales();sales.push(sale);await saveSales(sales);
+    cart=[];
+    if(document.getElementById("cart-resep"))document.getElementById("cart-resep").value="";
+    closePayment();
+    renderCart();buildApotekNav();
+    showToast("Transaksi berhasil!");showReceipt(sale);
+  }catch(e){
+    console.error(e);
+    showToast("Gagal menyimpan transaksi — periksa koneksi","err");
+  }finally{
+    if(btn){btn.textContent="✓ Selesai";btn.disabled=false;}
+  }
+}
+function receiptHtmlContent(sale){
+  return `
+      <div class="receipt" id="receipt-print-area">
+        <div style="text-align:center;margin-bottom:10px">
+          <img src="${document.getElementById('app-logo-src').src}" alt="${esc(session.apotek.name)}" style="height:44px;width:auto;margin-bottom:6px"/>
+          <div style="font-weight:800;font-size:15px">${esc(session.apotek.name)}</div>
+          <div style="color:var(--muted);font-size:12px">${esc(session.apotek.address)}</div>
+          <div style="font-size:12px;margin-top:6px">TRX-${String(sale.id).padStart(4,"0")} · ${sale.date}</div>
+        </div>
+        <div class="sep"></div>
+        <div style="font-size:12px">Pelanggan: <b>${esc(sale.customer)}</b></div>
+        ${sale.resep?`<div style="font-size:12px">Resep: <b>${esc(sale.resep)}</b></div>`:""}
+        <div class="sep"></div>
+        ${sale.items.map(it=>`<div style="display:flex;justify-content:space-between;padding:2px 0">${esc(it.name)} x${it.qty} ${esc(it.unitJual)}<span>${fmtCur(it.price*it.qty)}</span></div>`).join("")}
+        <div class="sep"></div>
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:15px"><span>Total</span><span>${fmtCur(sale.total)}</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Bayar</span><span>${fmtCur(sale.paid)}</span></div>
+        <div style="display:flex;justify-content:space-between;color:var(--success);font-weight:700"><span>Kembalian</span><span>${fmtCur(sale.change)}</span></div>
+        <div class="sep"></div>
+        <div style="text-align:center;font-size:12px;color:var(--muted)">Terima kasih atas kunjungan Anda!</div>
+      </div>`;
+}
+function showReceipt(sale){
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" style="max-width:340px" onclick="event.stopPropagation()">
+      ${receiptHtmlContent(sale)}
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick='printReceipt(${JSON.stringify(sale).replace(/'/g,"&#39;")})'>🖨️ Cetak</button>
+        <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick='downloadReceipt(${JSON.stringify(sale).replace(/'/g,"&#39;")})'>⬇️ Download JPG</button>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="closeModal()">Tutup</button>
+    </div>
+  </div>`;
+}
+function receiptPrintDocument(sale){
+  const logoSrc=document.getElementById('app-logo-src').src;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+  <title>Nota TRX-${String(sale.id).padStart(4,"0")}</title>
+  <style>
+    @page{margin:6mm;size:58mm auto;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;width:58mm;margin:0 auto;color:#111;font-size:12px;}
+    .receipt{padding:4px;}
+    .sep{border-top:1px dashed #999;margin:8px 0;}
+    img{display:block;margin:0 auto 6px;height:40px;width:auto;}
+  </style>
+  </head><body>${receiptHtmlContent(sale).replace('id="receipt-print-area"','')}
+  <script>
+    window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };
+  <\/script>
+  </body></html>`;
+}
+function printReceipt(sale){
+  const w=window.open("","_blank","width=400,height=600");
+  if(!w){showToast("Popup diblokir browser, izinkan popup untuk mencetak","err");return;}
+  w.document.open();
+  w.document.write(receiptPrintDocument(sale));
+  w.document.close();
+}
+function downloadReceipt(sale){
+  const el=document.getElementById("receipt-print-area");
+  if(!el||typeof html2canvas==="undefined"){showToast("Gagal membuat gambar nota","err");return;}
+  showToast("Menyiapkan nota...");
+  html2canvas(el,{scale:3,backgroundColor:"#ffffff",useCORS:true}).then(function(canvas){
+    const link=document.createElement("a");
+    link.download="Nota-TRX-"+String(sale.id).padStart(4,"0")+".jpg";
+    link.href=canvas.toDataURL("image/jpeg",0.95);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }).catch(function(e){console.error(e);showToast("Gagal download nota","err");});
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — DATA OBAT
+// ══════════════════════════════════════════════
+function renderDrugsTable(){
+  const drugs=getDrugs();
+  const q=(document.getElementById("drug-search2")||{}).value||"";
+  const filterEl=document.getElementById("unit-filter");
+  const uf=(filterEl||{}).value||"";
+
+  // Isi ulang opsi filter dari nama kemasan yang benar-benar ada di data (bebas/custom per obat)
+  if(filterEl){
+    const allNames=new Set();
+    drugs.forEach(d=>(d.kemasan||[]).forEach(k=>{if(k.name) allNames.add(k.name);}));
+    const sorted=[...allNames].sort((a,b)=>a.localeCompare(b));
+    const newHtml=`<option value="">Semua Satuan</option>`+sorted.map(n=>`<option${n===uf?" selected":""}>${esc(n)}</option>`).join("");
+    if(filterEl.innerHTML!==newHtml) filterEl.innerHTML=newHtml;
+  }
+
+  const list=drugs.filter(d=>{
+    const kemasanNames=(d.kemasan||[]).map(k=>k.name);
+    const matchUnit=!uf||kemasanNames.includes(uf)||d.unitJual===uf;
+    return matchUnit&&(d.name.toLowerCase().includes(q.toLowerCase())||d.batch.toLowerCase().includes(q.toLowerCase()));
+  });
+  document.getElementById("drugs-tbody").innerHTML=list.map(d=>{
+    const diff=dayDiff(d.expiry);
+    const kemasan=d.kemasan&&d.kemasan.length?d.kemasan:[{name:d.unitJual||"Unit",price:d.price||0,cost:d.cost||0,ppn:true}];
+    const priceDisplay=kemasan.map(k=>`${esc(k.name)}: ${fmtCur(k.price||0)}`).join("<br>");
+    const costDisplay=kemasan.map(k=>`${esc(k.name)}: ${fmtCur(k.cost||0)}${k.ppn?"":" *"}`).join("<br>");
+    const baseUnit=baseUnitName(d);
+    return`<tr>
+      <td style="font-weight:700">${esc(d.name)}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f1f5f9;padding:2px 8px;border-radius:6px">${esc(d.batch)}</span></td>
+      <td>${kemasan.map(k=>unitBadge(k.name)).join(" ")}</td>
+      <td>${badge(d.stock+" "+baseUnit,d.stock<=d.minStock?"bg-red":"bg-green")}</td>
+      <td style="font-weight:700;font-size:12px;line-height:1.6">${priceDisplay}</td>
+      <td style="color:var(--muted);font-size:12px;line-height:1.6">${costDisplay}<div style="font-size:10px;color:var(--muted);margin-top:2px">* blm PPN (+11% dihitung)</div></td>
+      <td>${badge(d.expiry,diff<=0?"bg-red":diff<=30?"bg-yellow":"bg-green")}</td>
+      <td style="color:var(--muted);font-size:12px">${esc(d.supplier)}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" onclick="openDrugModal(${d.id})">✏️</button>
+        <button class="btn btn-danger" onclick="deleteDrug(${d.id})">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+// State sementara untuk kemasan yang sedang diedit di form (array of {name,singkatan,isi,cost,...})
+let formKemasan = [];
+
+function openDrugModal(id){
+  const drugs=getDrugs();
+  const d=id?drugs.find(x=>x.id===id):{name:"",batch:"",stock:"",minStock:10,expiry:"",supplier:"",kemasan:[]};
+
+  // Salin kemasan (deep copy) ke state form supaya edit di form tidak langsung mengubah data asli sebelum Simpan
+  formKemasan = JSON.parse(JSON.stringify(d.kemasan&&d.kemasan.length?d.kemasan:[
+    {name:"",singkatan:"",isi:1,cost:"",costInputRaw:"",ppn:false,marginMode:"percent",marginValue:"",price:""}
+  ]));
+
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-title">${id?"Edit Data Obat":"Tambah Obat Baru"}</div>
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Nama Obat *</label><input class="inp" id="f-name" value="${esc(d.name)}"/></div>
+        <div class="form-group"><label class="form-label">No. Batch *</label><input class="inp" id="f-batch" value="${esc(d.batch)}" placeholder="BCH-2024-001"/></div>
+      </div>
+
+      <div class="info-box">💡 Kemasan pertama adalah satuan terkecil (contoh: tablet, kapsul, ml). Tambah kemasan berjenjang di atasnya (contoh: strip isi 10 tablet, dus isi 10 strip). Tiap kemasan punya harga beli, PPN, margin dan harga jual sendiri.</div>
+
+      <div id="kemasan-list"></div>
+      <button class="btn btn-ghost" style="margin-bottom:16px" onclick="addKemasanRow()">+ Tambah Kemasan</button>
+
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Stok Awal (dalam satuan terkecil) *</label><input type="number" class="inp" id="f-stock" value="${d.stock}"/></div>
+        <div class="form-group"><label class="form-label">Stok Minimum (satuan terkecil)</label><input type="number" class="inp" id="f-min" value="${d.minStock}"/></div>
+        <div class="form-group"><label class="form-label">Tanggal ED *</label><input type="date" class="inp" id="f-expiry" value="${d.expiry}"/></div>
+        <div class="form-group"><label class="form-label">Supplier</label><input class="inp" id="f-supplier" value="${esc(d.supplier)}"/></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" onclick="saveDrug(${id||0})">Simpan</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+  renderKemasanRows();
+}
+
+function renderKemasanRows(){
+  const el=document.getElementById("kemasan-list");
+  if(!el) return;
+  el.innerHTML = formKemasan.map((k,idx)=>{
+    const isBase = idx===0;
+    const prevName = idx>0 ? (formKemasan[idx-1].name||"kemasan sebelumnya") : null;
+    return`
+    <div style="border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700;font-size:13.5px">${isBase?"Satuan Terkecil":`Kemasan #${idx+1}`}</div>
+        ${!isBase?`<button class="btn btn-danger" style="padding:4px 10px;font-size:11.5px" onclick="removeKemasanRow(${idx})">🗑 Hapus</button>`:""}
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Nama Kemasan * <span style="font-weight:400;color:var(--muted)">(cth: ${isBase?"tablet, kapsul, ml":"strip, dus, box"})</span></label>
+          <input class="inp" id="km-name-${idx}" value="${esc(k.name||"")}" placeholder="${isBase?"Tablet":"Strip"}" oninput="updateKemasanField(${idx},'name',this.value)"/>
+        </div>
+        <div class="form-group"><label class="form-label">Singkatan</label>
+          <input class="inp" id="km-short-${idx}" value="${esc(k.singkatan||"")}" placeholder="${isBase?"tab":"str"}" maxlength="5" oninput="updateKemasanField(${idx},'singkatan',this.value)"/>
+        </div>
+        ${!isBase?`
+        <div class="form-group full">
+          <label class="form-label">Isi (berapa "${esc(prevName)}" dalam 1 ${esc(k.name||"kemasan ini")}) *</label>
+          <input type="number" class="inp" id="km-isi-${idx}" value="${k.isi||""}" placeholder="Cth: 10" oninput="updateKemasanField(${idx},'isi',this.value);recalcKemasanPrice(${idx})"/>
+        </div>`:""}
+        <div class="form-group"><label class="form-label">Harga Beli dari PBF</label>
+          <input type="number" class="inp" id="km-cost-${idx}" value="${k.cost||""}" placeholder="0" oninput="recalcKemasanPrice(${idx})"/>
+        </div>
+        <div class="form-group"><label class="form-label">Status PPN</label>
+          <select class="inp" id="km-ppn-${idx}" onchange="recalcKemasanPrice(${idx})">
+            <option value="false"${!k.ppn?" selected":""}>Belum termasuk PPN</option>
+            <option value="true"${k.ppn?" selected":""}>Sudah termasuk PPN (11%)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Mode Margin</label>
+          <select class="inp" id="km-mode-${idx}" onchange="recalcKemasanPrice(${idx})">
+            <option value="percent"${k.marginMode==="percent"?" selected":""}>Persen (%)</option>
+            <option value="rupiah"${k.marginMode==="rupiah"?" selected":""}>Rupiah (Rp)</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Nilai Margin</label>
+          <input type="number" class="inp" id="km-margin-${idx}" value="${k.marginValue||""}" placeholder="Cth: 20 atau 5000" oninput="recalcKemasanPrice(${idx})"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Harga Jual /${esc(k.name||"satuan")} (otomatis, bisa diedit manual)</label>
+          <input type="number" class="inp" id="km-price-${idx}" value="${k.price||""}" placeholder="Harga jual" oninput="updateKemasanField(${idx},'price',this.value)"/>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px" id="km-preview-${idx}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  formKemasan.forEach((k,idx)=>recalcKemasanPrice(idx,true));
+}
+
+function addKemasanRow(){
+  formKemasan.push({name:"",singkatan:"",isi:"",cost:"",costInputRaw:"",ppn:false,marginMode:"percent",marginValue:"",price:""});
+  renderKemasanRows();
+}
+function removeKemasanRow(idx){
+  if(formKemasan.length<=1){showToast("Minimal harus ada 1 satuan terkecil","err");return;}
+  formKemasan.splice(idx,1);
+  renderKemasanRows();
+}
+function updateKemasanField(idx,field,value){
+  if(!formKemasan[idx]) return;
+  formKemasan[idx][field] = field==="isi"?(parseFloat(value)||0):value;
+}
+
+// Hitung & tampilkan preview harga jual otomatis untuk 1 baris kemasan.
+// skipOverwrite=true dipakai saat render ulang form (supaya harga jual tersimpan tidak tertimpa kalau field sudah terisi).
+function recalcKemasanPrice(idx, skipOverwrite){
+  const costEl=document.getElementById(`km-cost-${idx}`);
+  const ppnEl=document.getElementById(`km-ppn-${idx}`);
+  const modeEl=document.getElementById(`km-mode-${idx}`);
+  const valEl=document.getElementById(`km-margin-${idx}`);
+  const priceEl=document.getElementById(`km-price-${idx}`);
+  const previewEl=document.getElementById(`km-preview-${idx}`);
+  if(!costEl||!ppnEl||!modeEl||!valEl||!priceEl) return;
+
+  const costInput=parseFloat(costEl.value)||0;
+  const hasPPN=ppnEl.value==="true";
+  const mode=modeEl.value;
+  const marginVal=parseFloat(valEl.value)||0;
+
+  // Simpan juga ke state formKemasan supaya tidak hilang saat re-render
+  if(formKemasan[idx]){
+    formKemasan[idx].cost=costInput;
+    formKemasan[idx].costInputRaw=costInput;
+    formKemasan[idx].ppn=hasPPN;
+    formKemasan[idx].marginMode=mode;
+    formKemasan[idx].marginValue=marginVal;
+  }
+
+  if(costInput<=0){ if(previewEl) previewEl.textContent=""; return; }
+
+  const costWithPPN = hasPPN ? costInput : Math.round(costInput*1.11);
+  let margin=0;
+  if(mode==="percent") margin=Math.round(costWithPPN*marginVal/100);
+  else margin=Math.round(marginVal);
+  const autoPrice = costWithPPN + margin;
+
+  if(previewEl) previewEl.textContent = `Harga beli +PPN: ${fmtCur(costWithPPN)} · Margin: ${fmtCur(margin)} · Harga jual otomatis: ${fmtCur(autoPrice)}`;
+
+  if(!skipOverwrite){
+    priceEl.value = autoPrice;
+    if(formKemasan[idx]) formKemasan[idx].price=autoPrice;
+  } else if(!priceEl.value){
+    priceEl.value = autoPrice;
+    if(formKemasan[idx]) formKemasan[idx].price=autoPrice;
+  }
+}
+
+async function saveDrug(id){
+  const name=document.getElementById("f-name").value.trim();
+  const batch=document.getElementById("f-batch").value.trim();
+  const stock=parseInt(document.getElementById("f-stock").value);
+  const expiry=document.getElementById("f-expiry").value;
+
+  // Ambil nilai terkini dari tiap baris kemasan di form (bukan cuma dari formKemasan state,
+  // supaya field yang baru diketik tapi belum trigger oninput tetap ter-capture)
+  const kemasan = formKemasan.map((k,idx)=>{
+    const nameEl=document.getElementById(`km-name-${idx}`);
+    const shortEl=document.getElementById(`km-short-${idx}`);
+    const isiEl=document.getElementById(`km-isi-${idx}`);
+    const costEl=document.getElementById(`km-cost-${idx}`);
+    const ppnEl=document.getElementById(`km-ppn-${idx}`);
+    const modeEl=document.getElementById(`km-mode-${idx}`);
+    const marginEl=document.getElementById(`km-margin-${idx}`);
+    const priceEl=document.getElementById(`km-price-${idx}`);
+    const costInput=parseFloat(costEl.value)||0;
+    const hasPPN=ppnEl.value==="true";
+    const costWithPPN = costInput>0 ? (hasPPN?costInput:Math.round(costInput*1.11)) : 0;
+    return{
+      name: nameEl.value.trim(),
+      singkatan: shortEl.value.trim(),
+      isi: idx===0?1:(parseFloat(isiEl.value)||0),
+      cost: costWithPPN,
+      costInputRaw: costInput,
+      ppn: hasPPN,
+      marginMode: modeEl.value,
+      marginValue: parseFloat(marginEl.value)||0,
+      price: parseFloat(priceEl.value)||0
+    };
+  });
+
+  if(!name||!batch||isNaN(stock)||!expiry){showToast("Lengkapi field wajib (*)","err");return;}
+  if(!kemasan[0].name){showToast("Nama satuan terkecil wajib diisi","err");return;}
+  if(kemasan.some((k,idx)=>idx>0&&(!k.name||!k.isi))){showToast("Lengkapi nama & isi untuk setiap kemasan","err");return;}
+  if(!kemasan.some(k=>k.price>0)){showToast("Isi minimal satu harga jual","err");return;}
+
+  // Legacy fields (price/cost/unitJual) dipertahankan mengikuti satuan terkecil, untuk kompatibilitas kode lama (laporan dsb.)
+  const obj={
+    name,batch,
+    kemasan,
+    unitJual: kemasan[0].name,
+    price: kemasan[0].price,
+    cost: kemasan[0].cost,
+    stock,minStock:parseInt(document.getElementById("f-min").value)||10,
+    expiry,supplier:document.getElementById("f-supplier").value
+  };
+  closeModal();
+  try{
+    const drugs=getDrugs();
+    if(id){const idx=drugs.findIndex(d=>d.id===id);drugs[idx]={...drugs[idx],...obj};}
+    else drugs.push({...obj,id:await bumpId()});
+    await saveDrugs(drugs);
+    renderDrugsTable();buildApotekNav();
+    showToast(id?"Data diperbarui":"Obat ditambahkan");
+  }catch(e){console.error(e);showToast("Gagal menyimpan — periksa koneksi","err");}
+}
+async function deleteDrug(id){
+  if(!confirm("Hapus obat ini?"))return;
+  try{
+    await saveDrugs(getDrugs().filter(d=>d.id!==id));
+    renderDrugsTable();buildApotekNav();showToast("Obat dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — EXPIRED
+// ══════════════════════════════════════════════
+function renderExpired(){
+  const drugs=getDrugs();
+  const exp=drugs.filter(d=>dayDiff(d.expiry)<=0);
+  const near=drugs.filter(d=>dayDiff(d.expiry)>0&&dayDiff(d.expiry)<=90);
+  const tbl=(list)=>list.length===0?`<div style="padding:14px 20px;color:var(--muted);font-size:13px">Tidak ada ✓</div>`:`
+    <table><thead><tr><th>Nama Obat</th><th>No. Batch</th><th>Satuan</th><th>Stok</th><th>Tgl ED</th><th>Sisa Hari</th><th>Supplier</th><th></th></tr></thead><tbody>
+    ${list.map(d=>{const diff=dayDiff(d.expiry);return`<tr>
+      <td style="font-weight:700">${esc(d.name)}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#f1f5f9;padding:2px 8px;border-radius:6px">${esc(d.batch)}</span></td>
+      <td>${unitBadge(d.unitJual)}</td><td>${d.stock} ${esc(d.unitJual)}</td><td>${d.expiry}</td>
+      <td>${badge(diff<=0?"EXPIRED":diff+" hari lagi",diff<=0?"bg-red":diff<=30?"bg-yellow":"bg-blue")}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(d.supplier)}</td>
+      <td><button class="btn btn-danger" onclick="deleteExpired(${d.id})">Hapus</button></td>
+    </tr>`;}).join("")}</tbody></table>`;
+  const sec=(title,list,color)=>`
+    <div style="margin-bottom:16px;background:#fff;border-radius:var(--radius);border:1.5px solid var(--border);border-top:4px solid ${color};overflow:hidden;box-shadow:var(--shadow)">
+      <div style="padding:16px 20px;font-weight:800;font-size:14px;color:${color}">${title} (${list.length})</div>${tbl(list)}</div>`;
+  document.getElementById("expired-content").innerHTML=sec("🔴 Sudah Expired",exp,"#dc2626")+sec("🟡 Mendekati Expired (≤ 90 hari)",near,"#b45309");
+}
+async function deleteExpired(id){
+  if(!confirm("Hapus obat expired?"))return;
+  try{
+    await saveDrugs(getDrugs().filter(d=>d.id!==id));
+    renderExpired();buildApotekNav();showToast("Obat dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — SALES
+// ══════════════════════════════════════════════
+function renderSalesTable(){
+  const q=(document.getElementById("sales-search")||{}).value||"";
+  const from=(document.getElementById("sales-from")||{}).value||"";
+  const to=(document.getElementById("sales-to")||{}).value||"";
+  const list=[...getSales()].reverse().filter(s=>{
+    const mq=s.customer.toLowerCase().includes(q.toLowerCase())||s.items.some(i=>i.name.toLowerCase().includes(q.toLowerCase()));
+    return mq&&(!from||s.date>=from)&&(!to||s.date<=to);
+  });
+  document.getElementById("sales-tbody").innerHTML=list.map(s=>`<tr>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600">TRX-${String(s.id).padStart(4,"0")}</td>
+    <td>${s.date}</td><td>${esc(s.customer)}</td>
+    <td style="font-size:12px;color:var(--muted);max-width:200px">${s.items.map(i=>i.name+" x"+i.qty+" "+i.unitJual).join(", ")}</td>
+    <td style="font-weight:800;color:var(--primary)">${fmtCur(s.total)}</td>
+    <td>${fmtCur(s.paid)}</td>
+    <td style="color:var(--success);font-weight:700">${fmtCur(s.change)}</td>
+    <td>${s.resep?badge(s.resep,"bg-blue"):badge("Bebas","bg-gray")}</td>
+    <td><button class="btn btn-danger" onclick="deleteSale(${s.id})">🗑</button></td>
+  </tr>`).join("");
+}
+async function deleteSale(id){
+  if(!confirm("Hapus transaksi ini?"))return;
+  try{
+    await saveSales(getSales().filter(s=>s.id!==id));
+    renderSalesTable();showToast("Transaksi dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — CUSTOMERS
+// ══════════════════════════════════════════════
+function renderCustTable(){
+  const customers=getCustomers(),sales=getSales();
+  const q=(document.getElementById("cust-search")||{}).value||"";
+  const list=customers.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.phone.includes(q));
+  document.getElementById("cust-tbody").innerHTML=list.map(c=>{
+    const cs=sales.filter(s=>s.customer===c.name);
+    return`<tr><td style="font-weight:700">${esc(c.name)}</td><td>${esc(c.phone)}</td>
+      <td style="color:var(--muted);font-size:12.5px">${esc(c.address)}</td>
+      <td>${badge(cs.length+"x","bg-blue")}</td>
+      <td style="font-weight:800;color:var(--primary)">${fmtCur(cs.reduce((a,s)=>a+s.total,0))}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-ghost" onclick="openCustModal(${c.id})">✏️</button>
+        <button class="btn btn-danger" onclick="deleteCust(${c.id})">🗑</button>
+      </div></td></tr>`;
+  }).join("");
+}
+function openCustModal(id){
+  const c=id?getCustomers().find(x=>x.id===id):{name:"",phone:"",address:""};
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">${id?"Edit Pelanggan":"Tambah Pelanggan"}</div>
+      <div class="form-group"><label class="form-label">Nama *</label><input class="inp" id="c-name" value="${esc(c.name)}"/></div>
+      <div class="form-group"><label class="form-label">Telepon</label><input class="inp" id="c-phone" value="${esc(c.phone)}"/></div>
+      <div class="form-group"><label class="form-label">Alamat</label><input class="inp" id="c-addr" value="${esc(c.address)}"/></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" onclick="saveCust(${id||0})">Simpan</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function saveCust(id){
+  const name=document.getElementById("c-name").value.trim();
+  if(!name){showToast("Nama wajib diisi","err");return;}
+  const obj={name,phone:document.getElementById("c-phone").value,address:document.getElementById("c-addr").value};
+  closeModal();
+  try{
+    const customers=getCustomers();
+    if(id){const idx=customers.findIndex(c=>c.id===id);customers[idx]={...customers[idx],...obj};}
+    else customers.push({...obj,id:await bumpId()});
+    await saveCustomers(customers);
+    renderCustTable();showToast(id?"Data diperbarui":"Pelanggan ditambahkan");
+  }catch(e){console.error(e);showToast("Gagal menyimpan","err");}
+}
+async function deleteCust(id){
+  if(!confirm("Hapus pelanggan ini?"))return;
+  try{
+    await saveCustomers(getCustomers().filter(c=>c.id!==id));
+    renderCustTable();showToast("Pelanggan dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — PEMBELIAN (Surat Pesanan & Faktur)
+// ══════════════════════════════════════════════
+function showPurchasingTab(tab,btn){
+  document.querySelectorAll(".po-tab").forEach(b=>b.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  document.getElementById("po-tab-content").style.display=tab==="po"?"block":"none";
+  document.getElementById("faktur-tab-content").style.display=tab==="faktur"?"block":"none";
+  document.getElementById("supplier-tab-content").style.display=tab==="supplier"?"block":"none";
+}
+function renderPurchasing(){
+  renderPOTable();
+  renderFakturTable();
+  renderSupplierTable();
+}
+
+// ── PBF / Supplier master data ──────────────────────────────────────────
+function supplierPickerOptions(selectedName){
+  const suppliers=getSuppliers();
+  let opts=`<option value="">+ Pilih PBF/Supplier...</option>`;
+  opts+=suppliers.map(s=>`<option value="${esc(s.name)}" ${s.name===selectedName?"selected":""}>${esc(s.name)}</option>`).join("");
+  opts+=`<option value="__manual__" ${selectedName&&!suppliers.find(s=>s.name===selectedName)?"":""}>+ Ketik manual...</option>`;
+  return opts;
+}
+function onSupplierPick(sel,textInputId){
+  const textEl=document.getElementById(textInputId);
+  if(sel.value==="__manual__"){
+    textEl.style.display="block";textEl.value="";textEl.focus();
+  }else if(sel.value){
+    textEl.style.display="none";textEl.value=sel.value;
+  }else{
+    textEl.style.display="none";textEl.value="";
+  }
+}
+function renderSupplierTable(){
+  const tbody=document.getElementById("supplier-tbody");
+  if(!tbody)return;
+  const list=getSuppliers().slice().sort((a,b)=>a.name.localeCompare(b.name));
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--muted)">Belum ada data PBF/Supplier</td></tr>`;return;}
+  tbody.innerHTML=list.map(s=>`
+    <tr>
+      <td>${esc(s.name)}</td>
+      <td>${esc(s.address||"-")}</td>
+      <td>${esc(s.phone||"-")}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" title="Edit" onclick="openSupplierModal(${s.id})">✏️</button>
+        <button class="btn-icon" title="Hapus" onclick="deleteSupplier(${s.id})">🗑</button>
+      </td>
+    </tr>`).join("");
+}
+function openSupplierModal(id){
+  const s=id?getSuppliers().find(x=>x.id===id):{name:"",address:"",phone:""};
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">${id?"Edit":"Tambah"} PBF/Supplier</div>
+      <div class="form-group"><label class="form-label">Nama PBF/Supplier *</label><input class="inp" id="sp-name" value="${esc(s.name)}" placeholder="Nama perusahaan besar farmasi"/></div>
+      <div class="form-group"><label class="form-label">Alamat</label><input class="inp" id="sp-address" value="${esc(s.address||"")}" placeholder="Alamat lengkap"/></div>
+      <div class="form-group"><label class="form-label">Telepon</label><input class="inp" id="sp-phone" value="${esc(s.phone||"")}" placeholder="Opsional"/></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" onclick="saveSupplier(${id||"null"})">Simpan</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function saveSupplier(id){
+  const name=document.getElementById("sp-name").value.trim();
+  if(!name){showToast("Nama PBF/Supplier wajib diisi","err");return;}
+  const address=document.getElementById("sp-address").value.trim();
+  const phone=document.getElementById("sp-phone").value.trim();
+  closeModal();
+  try{
+    const list=getSuppliers();
+    if(id){
+      const idx=list.findIndex(x=>x.id===id);
+      if(idx>-1) list[idx]={...list[idx],name,address,phone};
+    }else{
+      list.push({id:await bumpId(),name,address,phone});
+    }
+    await saveSuppliers(list);
+    renderPurchasing();showToast("Data PBF/Supplier disimpan");
+  }catch(e){console.error(e);showToast("Gagal menyimpan","err");}
+}
+async function deleteSupplier(id){
+  if(!confirm("Hapus data PBF/Supplier ini?"))return;
+  try{
+    await saveSuppliers(getSuppliers().filter(s=>s.id!==id));
+    renderPurchasing();showToast("Data PBF/Supplier dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+function poStatusLabel(po){
+  if(po.status==="matched") return `<span class="badge" style="background:#dcfce7;color:#0f7a3d">Terpenuhi</span>`;
+  return `<span class="badge" style="background:#fef3c7;color:#92400e">Menunggu Faktur</span>`;
+}
+function renderPOTable(){
+  const tbody=document.getElementById("po-tbody");
+  if(!tbody)return;
+  const pos=getPOs().slice().sort((a,b)=>b.id-a.id);
+  if(!pos.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted)">Belum ada Surat Pesanan</td></tr>`;return;}
+  tbody.innerHTML=pos.map(po=>`
+    <tr>
+      <td>SP-${po.id}</td>
+      <td>${po.date}</td>
+      <td>${esc(po.supplier)}</td>
+      <td>${po.items.length} item</td>
+      <td>${poStatusLabel(po)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" title="Lihat" onclick="viewPO(${po.id})">👁</button>
+        <button class="btn-icon" title="Hapus" onclick="deletePO(${po.id})">🗑</button>
+      </td>
+    </tr>`).join("");
+}
+
+let poFormItems=[];
+function openPOModal(){
+  poFormItems=[];
+  const drugs=getDrugs();
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-title">Buat Surat Pesanan</div>
+      <div class="form-group"><label class="form-label">PBF / Supplier *</label>
+        <select class="inp" id="po-supplier-select" onchange="onSupplierPick(this,'po-supplier')">${supplierPickerOptions()}</select>
+        <input class="inp" id="po-supplier" placeholder="Nama PBF/Supplier (manual)" style="display:none;margin-top:6px"/>
+      </div>
+      <div class="form-group"><label class="form-label">Tanggal</label><input type="date" class="inp" id="po-date" value="${todayStr()}"/></div>
+      <div class="form-group"><label class="form-label">Catatan</label><input class="inp" id="po-notes" placeholder="Opsional"/></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label class="form-label" style="margin:0">Item Pesanan</label>
+        <div style="display:flex;gap:6px">
+          <select class="inp" id="po-pick-drug" style="width:220px">
+            <option value="">+ Pilih dari Data Obat...</option>
+            ${drugs.map(d=>`<option value="${d.id}">${esc(d.name)} (${esc(d.batch||"-")})</option>`).join("")}
+          </select>
+          <button class="btn btn-ghost" onclick="addPOItemFromDrug()">Tambah</button>
+          <button class="btn btn-ghost" onclick="addPOItemManual()">+ Manual</button>
+        </div>
+      </div>
+      <div id="po-items-list" style="margin-top:10px"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" onclick="savePO()">Simpan Surat Pesanan</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+  renderPOItemsList();
+}
+function addPOItemFromDrug(){
+  const sel=document.getElementById("po-pick-drug");
+  const id=parseInt(sel.value);
+  if(!id)return;
+  const d=getDrugs().find(x=>x.id===id);
+  if(!d)return;
+  poFormItems.push({name:d.name,unit:baseUnitName(d),qty:1,manual:false,drugId:d.id});
+  sel.value="";
+  renderPOItemsList();
+}
+function addPOItemManual(){
+  poFormItems.push({name:"",unit:"",qty:1,manual:true,drugId:null});
+  renderPOItemsList();
+}
+function removePOItem(idx){
+  poFormItems.splice(idx,1);
+  renderPOItemsList();
+}
+function updatePOItemField(idx,field,value){
+  poFormItems[idx][field]=field==="qty"?(parseInt(value)||1):value;
+}
+function renderPOItemsList(){
+  const el=document.getElementById("po-items-list");
+  if(!poFormItems.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Belum ada item. Pilih dari Data Obat atau tambah manual.</div>`;return;}
+  el.innerHTML=poFormItems.map((it,idx)=>`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      ${it.manual
+        ? `<input class="inp" placeholder="Nama obat (manual)" value="${esc(it.name)}" oninput="updatePOItemField(${idx},'name',this.value)" style="flex:2"/>`
+        : `<input class="inp" value="${esc(it.name)}" disabled style="flex:2;background:#f8fafc"/>`
+      }
+      <input class="inp" placeholder="Satuan" value="${esc(it.unit)}" oninput="updatePOItemField(${idx},'unit',this.value)" style="flex:1"/>
+      <input type="number" class="inp" min="1" value="${it.qty}" oninput="updatePOItemField(${idx},'qty',this.value)" style="width:90px"/>
+      <button class="btn-icon" onclick="removePOItem(${idx})">🗑</button>
+    </div>`).join("");
+}
+async function savePO(){
+  const supplier=document.getElementById("po-supplier").value.trim();
+  if(!supplier){showToast("Nama PBF/Supplier wajib diisi","err");return;}
+  if(!poFormItems.length){showToast("Tambahkan minimal 1 item","err");return;}
+  for(const it of poFormItems){
+    if(!it.name||!it.name.trim()){showToast("Nama item tidak boleh kosong","err");return;}
+  }
+  const date=document.getElementById("po-date").value||todayStr();
+  const notes=document.getElementById("po-notes").value;
+  closeModal();
+  try{
+    const po={id:await bumpId(),supplier,date,notes,items:JSON.parse(JSON.stringify(poFormItems)),status:"pending",createdAt:Date.now()};
+    const pos=getPOs();pos.push(po);
+    await savePOs(pos);
+    renderPurchasing();showToast("Surat Pesanan dibuat");
+  }catch(e){console.error(e);showToast("Gagal menyimpan","err");}
+}
+function viewPO(id){
+  const po=getPOs().find(p=>p.id===id);
+  if(!po)return;
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-title">Surat Pesanan SP-${po.id}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">
+        PBF: <b>${esc(po.supplier)}</b> &middot; Tanggal: ${po.date} &middot; Status: ${poStatusLabel(po)}
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Nama Obat</th><th>Satuan</th><th>Jumlah</th></tr></thead><tbody>
+        ${po.items.map(it=>`<tr><td>${esc(it.name)}</td><td>${esc(it.unit||"-")}</td><td>${it.qty}</td></tr>`).join("")}
+      </tbody></table></div>
+      ${po.notes?`<div style="margin-top:10px;font-size:13px"><b>Catatan:</b> ${esc(po.notes)}</div>`:""}
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-ghost" onclick="closeModal()">Tutup</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function deletePO(id){
+  if(!confirm("Hapus Surat Pesanan ini?"))return;
+  try{
+    await savePOs(getPOs().filter(p=>p.id!==id));
+    renderPurchasing();showToast("Surat Pesanan dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+function renderFakturTable(){
+  const tbody=document.getElementById("faktur-tbody");
+  if(!tbody)return;
+  const list=getFakturs().slice().sort((a,b)=>b.id-a.id);
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted)">Belum ada Faktur</td></tr>`;return;}
+  tbody.innerHTML=list.map(f=>`
+    <tr>
+      <td>${esc(f.noFaktur)}</td>
+      <td>${f.date}</td>
+      <td>${esc(f.supplier)}</td>
+      <td>${f.poId?("SP-"+f.poId):"-"}</td>
+      <td>${f.items.length} item</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" title="Lihat" onclick="viewFaktur(${f.id})">👁</button>
+        <button class="btn-icon" title="Hapus" onclick="deleteFaktur(${f.id})">🗑</button>
+      </td>
+    </tr>`).join("");
+}
+
+let fakturFormItems=[];
+function openFakturModal(){
+  fakturFormItems=[];
+  const drugs=getDrugs();
+  const openPOs=getPOs().filter(p=>p.status!=="matched");
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-title">Input Faktur</div>
+      <div class="form-group"><label class="form-label">No. Faktur *</label><input class="inp" id="fk-no" placeholder="Nomor faktur dari PBF"/></div>
+      <div class="form-group"><label class="form-label">PBF / Supplier *</label>
+        <select class="inp" id="fk-supplier-select" onchange="onSupplierPick(this,'fk-supplier')">${supplierPickerOptions()}</select>
+        <input class="inp" id="fk-supplier" placeholder="Nama PBF/Supplier (manual)" style="display:none;margin-top:6px"/>
+      </div>
+      <div class="form-group"><label class="form-label">Tanggal</label><input type="date" class="inp" id="fk-date" value="${todayStr()}"/></div>
+      <div class="form-group">
+        <label class="form-label">Cocokkan dengan Surat Pesanan</label>
+        <select class="inp" id="fk-po">
+          <option value="">Tidak dicocokkan</option>
+          ${openPOs.map(p=>`<option value="${p.id}">SP-${p.id} — ${esc(p.supplier)} (${p.date})</option>`).join("")}
+        </select>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin:-4px 0 10px">📌 Faktur hanya dicatat sebagai riwayat/dokumen. Stok obat tetap diperbarui manual lewat menu Data Obat.</div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label class="form-label" style="margin:0">Item Diterima</label>
+        <div style="display:flex;gap:6px">
+          <select class="inp" id="fk-pick-drug" style="width:220px">
+            <option value="">+ Pilih dari Data Obat...</option>
+            ${drugs.map(d=>`<option value="${d.id}">${esc(d.name)} (${esc(d.batch||"-")})</option>`).join("")}
+          </select>
+          <button class="btn btn-ghost" onclick="addFakturItemFromDrug()">Tambah</button>
+          <button class="btn btn-ghost" onclick="addFakturItemManual()">+ Manual</button>
+        </div>
+      </div>
+      <div id="fk-items-list" style="margin-top:10px"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" onclick="saveFaktur()">Simpan Faktur</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      </div>
+    </div>
+  </div>`;
+  renderFakturItemsList();
+}
+function addFakturItemFromDrug(){
+  const sel=document.getElementById("fk-pick-drug");
+  const id=parseInt(sel.value);
+  if(!id)return;
+  const d=getDrugs().find(x=>x.id===id);
+  if(!d)return;
+  fakturFormItems.push({name:d.name,unit:baseUnitName(d),qty:1,batch:d.batch||"",expiry:d.expiry||"",manual:false,drugId:d.id});
+  sel.value="";
+  renderFakturItemsList();
+}
+function addFakturItemManual(){
+  fakturFormItems.push({name:"",unit:"",qty:1,batch:"",expiry:"",manual:true,drugId:null});
+  renderFakturItemsList();
+}
+function removeFakturItem(idx){
+  fakturFormItems.splice(idx,1);
+  renderFakturItemsList();
+}
+function updateFakturItemField(idx,field,value){
+  fakturFormItems[idx][field]=field==="qty"?(parseInt(value)||1):value;
+}
+function renderFakturItemsList(){
+  const el=document.getElementById("fk-items-list");
+  if(!fakturFormItems.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Belum ada item. Pilih dari Data Obat atau tambah manual.</div>`;return;}
+  el.innerHTML=fakturFormItems.map((it,idx)=>`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+      ${it.manual
+        ? `<input class="inp" placeholder="Nama obat (manual)" value="${esc(it.name)}" oninput="updateFakturItemField(${idx},'name',this.value)" style="flex:2;min-width:140px"/>`
+        : `<input class="inp" value="${esc(it.name)}" disabled style="flex:2;min-width:140px;background:#f8fafc"/>`
+      }
+      <input class="inp" placeholder="Satuan" value="${esc(it.unit)}" oninput="updateFakturItemField(${idx},'unit',this.value)" style="width:90px"/>
+      <input type="number" class="inp" min="1" value="${it.qty}" oninput="updateFakturItemField(${idx},'qty',this.value)" style="width:80px"/>
+      <input class="inp" placeholder="No. Batch" value="${esc(it.batch)}" oninput="updateFakturItemField(${idx},'batch',this.value)" style="width:110px"/>
+      <input type="date" class="inp" value="${it.expiry}" oninput="updateFakturItemField(${idx},'expiry',this.value)" style="width:140px"/>
+      <button class="btn-icon" onclick="removeFakturItem(${idx})">🗑</button>
+    </div>`).join("");
+}
+async function saveFaktur(){
+  const noFaktur=document.getElementById("fk-no").value.trim();
+  const supplier=document.getElementById("fk-supplier").value.trim();
+  if(!noFaktur||!supplier){showToast("No. Faktur dan Supplier wajib diisi","err");return;}
+  if(!fakturFormItems.length){showToast("Tambahkan minimal 1 item","err");return;}
+  for(const it of fakturFormItems){
+    if(!it.name||!it.name.trim()){showToast("Nama item tidak boleh kosong","err");return;}
+  }
+  const date=document.getElementById("fk-date").value||todayStr();
+  const poId=parseInt(document.getElementById("fk-po").value)||null;
+  closeModal();
+  try{
+    const faktur={id:await bumpId(),noFaktur,supplier,date,poId,items:JSON.parse(JSON.stringify(fakturFormItems)),createdAt:Date.now()};
+    const fakturs=getFakturs();fakturs.push(faktur);
+    await saveFakturs(fakturs);
+
+    if(poId){
+      const pos=getPOs();
+      const idx=pos.findIndex(p=>p.id===poId);
+      if(idx>-1){pos[idx].status="matched";pos[idx].fakturId=faktur.id;await savePOs(pos);}
+    }
+
+    renderPurchasing();buildApotekNav();
+    showToast("Faktur disimpan. Ingat update stok manual lewat Data Obat.");
+  }catch(e){console.error(e);showToast("Gagal menyimpan","err");}
+}
+function viewFaktur(id){
+  const f=getFakturs().find(x=>x.id===id);
+  if(!f)return;
+  document.getElementById("modal-area").innerHTML=`
+  <div class="modal-bg" onclick="closeModal()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-title">Faktur ${esc(f.noFaktur)}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px">
+        PBF: <b>${esc(f.supplier)}</b> &middot; Tanggal: ${f.date}
+        ${f.poId?` &middot; Terkait SP-${f.poId}`:""}
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">📌 Dokumen riwayat saja — stok diperbarui manual lewat Data Obat.</div>
+      <div class="tbl-wrap"><table><thead><tr><th>Nama Obat</th><th>Satuan</th><th>Jumlah</th><th>No. Batch</th><th>Tgl ED</th></tr></thead><tbody>
+        ${f.items.map(it=>`<tr><td>${esc(it.name)}</td><td>${esc(it.unit||"-")}</td><td>${it.qty}</td><td>${esc(it.batch||"-")}</td><td>${it.expiry||"-"}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-ghost" onclick="closeModal()">Tutup</button>
+      </div>
+    </div>
+  </div>`;
+}
+async function deleteFaktur(id){
+  if(!confirm("Hapus faktur ini?"))return;
+  try{
+    await saveFakturs(getFakturs().filter(f=>f.id!==id));
+    renderPurchasing();showToast("Faktur dihapus");
+  }catch(e){console.error(e);showToast("Gagal menghapus","err");}
+}
+
+// ══════════════════════════════════════════════
+// APOTEK — REPORTS
+// ══════════════════════════════════════════════
+function renderReports(){
+  const drugs=getDrugs(),sales=getSales();
+  const period=(document.getElementById("report-period")||{}).value||"today";
+  const now=new Date();
+  let list=sales;
+  if(period==="today")list=sales.filter(s=>s.date===todayStr());
+  else if(period==="week"){const w=new Date();w.setDate(w.getDate()-7);list=sales.filter(s=>new Date(s.date)>=w);}
+  else if(period==="month")list=sales.filter(s=>s.date.startsWith(now.toISOString().slice(0,7)));
+  const rev=list.reduce((a,s)=>a+s.total,0);
+  const cogs=list.reduce((a,s)=>a+s.items.reduce((b,i)=>{
+    const d=drugs.find(x=>x.id===i.drugId);
+    if(!d) return b;
+    const k=findKemasanByName(d,i.unitJual);
+    const cost = (k?k.cost:0) || d.cost || 0;
+    return b+cost*i.qty;
+  },0),0);
+  document.getElementById("report-stats").innerHTML=[
+    {label:"Total Penjualan",val:fmtCur(rev),c:"#0f7a3d"},
+    {label:"Total Transaksi",val:list.length+"x",c:"#7c3aed"},
+    {label:"HPP (COGS)",val:fmtCur(cogs),c:"#dc2626"},
+    {label:"Laba Kotor",val:fmtCur(rev-cogs),c:"#15803d"},
+  ].map(s=>`<div class="stat-card" style="--c:${s.c}"><div class="stat-label">${s.label}</div><div class="stat-val">${s.val}</div></div>`).join("");
+  const ds={};list.forEach(s=>s.items.forEach(i=>{ds[i.name]=(ds[i.name]||0)+i.qty;}));
+  const top=Object.entries(ds).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxQ=top[0]?top[0][1]:1;
+  document.getElementById("report-terlaris").innerHTML=`<div style="font-weight:800;font-size:14px;margin-bottom:16px">📊 Obat Terlaris</div>`+
+    (top.length===0?`<div style="color:var(--muted);font-size:13px">Belum ada data</div>`:
+    top.map(([name,qty],i)=>`<div class="prog-wrap"><div class="prog-label"><span style="font-weight:600;font-size:13px">${i+1}. ${esc(name)}</span><span style="font-weight:800;color:var(--primary)">${qty} unit</span></div><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(qty/maxQ*100)}%"></div></div></div>`).join(""));
+  document.getElementById("report-detail").innerHTML=`<div style="font-weight:800;font-size:14px;margin-bottom:14px">🧾 Rincian Transaksi</div>`+
+    (list.length===0?`<div style="color:var(--muted);font-size:13px">Tidak ada data</div>`:`
+    <table><thead><tr><th>Tanggal</th><th>Pelanggan</th><th>Total</th></tr></thead><tbody>
+    ${[...list].reverse().slice(0,10).map(s=>`<tr><td style="font-size:12px">${s.date}</td><td>${esc(s.customer)}</td><td style="font-weight:800;color:var(--primary)">${fmtCur(s.total)}</td></tr>`).join("")}
+    </tbody></table>`);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+document.addEventListener("click",(e)=>{
+  const dropdown=document.getElementById("search-results");
+  const search=document.getElementById("drug-search");
+  if(!dropdown||!search) return;
+  if(!dropdown.contains(e.target) && e.target!==search){
+    dropdown.classList.remove("open");
+  }
+});
+
+(async function init(){
+  try{
+    const ok = await restoreSession();
+    if(ok) await launchApp();
+  }catch(e){
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
